@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "ReTech AI",
+    "slug": "retech-ai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.retechai.app",
+      "usesCleartextTraffic": true
+    }
+  }
+}
