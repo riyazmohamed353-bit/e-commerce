@@ -4,4 +4,6 @@ dist/
 web-build/
 .env
 *.jks
-*.keystore
+*.keystore../backend/.env
+../backend/.env.backup
+android/app/debug.keystore
