@@ -72,6 +72,8 @@ for a used electronics marketplace.
 
 Request: "${query}"
 
+The "category" field, if present, MUST be exactly one of: phone, laptop, tablet, smartwatch, camera, other.
+
 Respond ONLY with JSON in this exact shape (omit fields that don't apply):
 {"category": string, "maxPrice": number, "minPrice": number, "brand": string,
  "minRam": string, "gpu": string, "keywords": [string]}

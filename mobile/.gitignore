@@ -2,8 +2,12 @@ node_modules/
 .expo/
 dist/
 web-build/
+
 .env
 *.jks
-*.keystore../backend/.env
+*.keystore
+
+../backend/.env
 ../backend/.env.backup
+
 android/app/debug.keystore

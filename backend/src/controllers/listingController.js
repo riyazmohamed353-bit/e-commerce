@@ -15,9 +15,11 @@ exports.getListings = async (req, res) => {
   try {
     const { category, minPrice, maxPrice, brand, q, minRam } = req.query;
     const filter = { status: 'active' };
-    if (category) filter.category = category;
+    // Case-insensitive, partial match - AI-parsed search terms ("smartphone")
+    // won't always exactly match what a seller typed ("phone"), so an exact
+    // equality check here was silently returning zero results.
+    if (category) filter.category = new RegExp(category, 'i');
     if (brand) filter.brand = new RegExp(brand, 'i');
-    if (minRam) filter['specs.ram'] = new RegExp(minRam, 'i');
     if (minPrice || maxPrice) {
       filter.sellerPrice = {};
       if (minPrice) filter.sellerPrice.$gte = Number(minPrice);
@@ -25,10 +27,23 @@ exports.getListings = async (req, res) => {
     }
     if (q) filter.$text = { $search: q };
 
-    const listings = await Listing.find(filter)
+    let listings = await Listing.find(filter)
       .populate('seller', 'name')
       .sort({ createdAt: -1 })
       .limit(100);
+
+    // minRam needs a numeric "at least N GB" comparison, not a substring
+    // match (a plain regex would wrongly exclude "16GB" when searching "8GB").
+    if (minRam) {
+      const minRamNum = parseInt(minRam, 10);
+      if (!Number.isNaN(minRamNum)) {
+        listings = listings.filter((l) => {
+          const listingRamNum = parseInt(l.specs?.ram, 10);
+          return !Number.isNaN(listingRamNum) && listingRamNum >= minRamNum;
+        });
+      }
+    }
+
     res.json(listings);
   } catch (err) {
     res.status(500).json({ message: err.message });
