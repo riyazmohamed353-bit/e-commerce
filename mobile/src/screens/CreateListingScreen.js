@@ -69,12 +69,13 @@ export default function CreateListingScreen({ navigation }) {
     setBusy(true);
     try {
       const specs = { storage, ram, ageMonths: Number(ageMonths) || 0, batteryHealth: Number(batteryHealth) || 0 };
-      // NOTE: for a real production app, upload photo files to Firebase/S3
-      // and store their URLs instead of raw base64 in Mongo.
+      // Store photos as base64 data URIs so they're actually persisted on the
+      // server (in MongoDB) and visible to everyone - not just a local file
+      // path on this phone, which disappears once the image cache clears.
       const { data } = await client.post('/listings', {
         title, category, brand, model, specs, conditionText,
         sellerPrice: Number(sellerPrice),
-        photos: photos.map((p) => p.uri),
+        photos: photos.map((p) => `data:image/jpeg;base64,${p.base64}`),
         aiEstimate: aiEstimate || undefined,
         aiCondition: aiCondition || undefined,
       });
