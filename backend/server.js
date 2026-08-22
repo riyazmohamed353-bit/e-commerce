@@ -37,10 +37,15 @@ io.on('connection', (socket) => {
   socket.on('sendMessage', async (msg) => {
     // msg = { chatId, senderId, text }
     const Message = require('./src/models/Message');
+    const Chat = require('./src/models/Chat');
     const saved = await Message.create({
       chat: msg.chatId,
       sender: msg.senderId,
       text: msg.text,
+    });
+    await Chat.findByIdAndUpdate(msg.chatId, {
+      lastMessageText: msg.text,
+      lastMessageAt: new Date(),
     });
     io.to(msg.chatId).emit('newMessage', saved);
   });
