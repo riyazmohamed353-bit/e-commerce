@@ -67,6 +67,7 @@ exports.register = async (req, res) => {
       requiresOtp: true,
     });
   } catch (err) {
+    console.error('REGISTER ERROR:', err);
     res.status(500).json({ message: err.message });
   }
 };
