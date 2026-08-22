@@ -6,8 +6,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "android": {
-      "package": "com.retechai.app",
-      "usesCleartextTraffic": true
+      "package": "com.retechai.app"
     }
   }
 }
