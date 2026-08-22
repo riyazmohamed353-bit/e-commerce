@@ -26,9 +26,13 @@ export default function ListingDetailScreen({ route, navigation }) {
     }
   };
 
-  const openChat = () => {
-    const chatId = [listingId, user.id, listing.seller._id].sort().join('_');
-    navigation.navigate('Chat', { chatId, sellerName: listing.seller.name });
+  const openChat = async () => {
+    try {
+      const { data } = await client.post('/chat/start', { listingId });
+      navigation.navigate('Chat', { chatId: data._id, sellerName: data.seller.name });
+    } catch (err) {
+      Alert.alert('Could not open chat', err.response?.data?.message || err.message);
+    }
   };
 
   if (!listing) return null;
@@ -80,9 +84,11 @@ export default function ListingDetailScreen({ route, navigation }) {
           </View>
         )}
 
-        <TouchableOpacity style={styles.chatBtn} onPress={openChat}>
-          <Text style={styles.chatBtnText}>Message Seller</Text>
-        </TouchableOpacity>
+        {listing.seller?._id !== user.id && (
+          <TouchableOpacity style={styles.chatBtn} onPress={openChat}>
+            <Text style={styles.chatBtnText}>Message Seller</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </ScrollView>
   );
