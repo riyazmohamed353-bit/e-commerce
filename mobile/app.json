@@ -2,11 +2,24 @@
   "expo": {
     "name": "ReTech AI",
     "slug": "retech-ai",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
     "android": {
-      "package": "com.retechai.app"
+      "package": "com.retechai.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9968ac07-f9c8-4b4d-bd7e-37aa18df0017"
+      }
     }
   }
 }

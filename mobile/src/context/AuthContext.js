@@ -26,8 +26,20 @@ export function AuthProvider({ children }) {
   // Step 1 of signup: creates the account and triggers an emailed OTP.
   // Does NOT log the user in yet - returns { email, requiresOtp }.
   const register = async (name, email, password, phone) => {
-    const { data } = await client.post('/auth/register', { name, email, password, phone });
-    return data;
+    try {
+      const { data } = await client.post('/auth/register', { name, email, password, phone });
+      return data;
+    } catch (err) {
+      console.log('REGISTER ERROR >>>', JSON.stringify({
+        message: err.message,
+        code: err.code,
+        baseURL: err.config?.baseURL,
+        url: err.config?.url,
+        responseStatus: err.response?.status,
+        responseData: err.response?.data,
+      }, null, 2));
+      throw err;
+    }
   };
 
   // Step 2 of signup: confirms the OTP and completes login.

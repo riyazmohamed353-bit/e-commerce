@@ -1,11 +1,11 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-export const BASE_URL = 'http://10.23.26.121:5000/api';
+export const BASE_URL = 'https://used-electronics-product-sale.onrender.com/api';
 
 const client = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000,
+  timeout: 60000, // Render free tier can take 30-50s to wake from sleep
   headers: {
     'Content-Type': 'application/json',
   },
