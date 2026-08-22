@@ -17,7 +17,7 @@ export default function ChatScreen({ route }) {
   const listRef = useRef(null);
 
   useEffect(() => {
-    client.get(`/chat/${chatId}`).then(({ data }) => setMessages(data));
+    client.get(`/chat/${chatId}/messages`).then(({ data }) => setMessages(data));
 
     const socket = io(SOCKET_URL);
     socketRef.current = socket;
