@@ -17,6 +17,7 @@ import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
 import ListingDetailScreen from '../screens/ListingDetailScreen';
 import CreateListingScreen from '../screens/CreateListingScreen';
+import MessagesScreen from '../screens/MessagesScreen';
 import ChatScreen from '../screens/ChatScreen';
 
 const AuthStack = createNativeStackNavigator();
@@ -45,6 +46,7 @@ const TAB_ICONS = {
   Dashboard: 'grid-outline',
   Marketplace: 'storefront-outline',
   Search: 'sparkles-outline',
+  Messages: 'chatbubble-ellipses-outline',
   CreateListing: 'add-circle-outline',
 };
 
@@ -63,6 +65,7 @@ function MainTabs() {
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'Dashboard' }} />
       <Tab.Screen name="Marketplace" component={HomeScreen} options={{ title: 'Marketplace', headerShown: false }} />
       <Tab.Screen name="Search" component={SearchScreen} options={{ title: 'Smart Search' }} />
+      <Tab.Screen name="Messages" component={MessagesScreen} options={{ title: 'Messages', headerShown: false }} />
       <Tab.Screen name="CreateListing" component={CreateListingScreen} options={{ title: 'Sell a Device' }} />
     </Tab.Navigator>
   );
