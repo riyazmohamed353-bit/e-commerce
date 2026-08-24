@@ -2,95 +2,96 @@ const express = require('express');
 
 const router = express.Router();
 
-const auth = require('../middleware/auth');
-
 const {
   createListing,
   getListings,
   getListingById,
   updateListing,
-  compareListings,
+  deleteListing,
+  markAsSold,
   getMyListings,
   getDashboardStats,
-  markListingAsSold,
-  markListingAsActive,
 } = require('../controllers/listingController');
 
+const requireAuth = require('../middleware/auth');
+
 // ============================================================
-// PUBLIC ROUTES
+// DASHBOARD STATS
+// IMPORTANT: MUST BE BEFORE /:id
 // ============================================================
 
-// Compare 2 or more listings
-// GET /api/listings/compare?ids=id1,id2
 router.get(
-  '/compare',
-  compareListings
+  '/dashboard-stats',
+  requireAuth,
+  getDashboardStats
 );
 
-// Get all active listings
-// GET /api/listings
+// ============================================================
+// MY LISTINGS
+// ============================================================
+
+router.get(
+  '/my-listings',
+  requireAuth,
+  getMyListings
+);
+
+// ============================================================
+// CREATE
+// ============================================================
+
+router.post(
+  '/',
+  requireAuth,
+  createListing
+);
+
+// ============================================================
+// ALL LISTINGS
+// ============================================================
+
 router.get(
   '/',
   getListings
 );
 
-// Get single listing
-// GET /api/listings/:id
+// ============================================================
+// MARK AS SOLD
+// ============================================================
+
+router.patch(
+  '/:id/sold',
+  requireAuth,
+  markAsSold
+);
+
+// ============================================================
+// GET ONE LISTING
+// ============================================================
+
 router.get(
   '/:id',
   getListingById
 );
 
 // ============================================================
-// AUTHENTICATED ROUTES
+// UPDATE
 // ============================================================
 
-// My listings
-// GET /api/listings/mine
-router.get(
-  '/mine',
-  auth,
-  getMyListings
-);
-
-// Dashboard statistics
-// GET /api/listings/dashboard-stats
-router.get(
-  '/dashboard-stats',
-  auth,
-  getDashboardStats
-);
-
-// Create listing
-// POST /api/listings
-router.post(
-  '/',
-  auth,
-  createListing
-);
-
-// Update listing
-// PATCH /api/listings/:id
-router.patch(
+router.put(
   '/:id',
-  auth,
+  requireAuth,
   updateListing
 );
 
-// Mark listing as sold
-// PATCH /api/listings/:id/sold
-router.patch(
-  '/:id/sold',
-  auth,
-  markListingAsSold
-);
+// ============================================================
+// DELETE
+// ============================================================
 
-// Mark listing active again
-// PATCH /api/listings/:id/active
-router.patch(
-  '/:id/active',
-  auth,
-  markListingAsActive
+router.delete(
+  '/:id',
+  requireAuth,
+  deleteListing
 );
 
 module.exports = router;

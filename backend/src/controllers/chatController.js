@@ -32,6 +32,7 @@ function formatMessage(message) {
 
     sender: message.sender,
     receiver: message.receiver,
+    listing: message.listing,
 
     text: decryptMessage(
       message.encryptedText,
@@ -155,6 +156,10 @@ exports.getMyChats = async (req, res) => {
         'receiver',
         'name'
       )
+      .populate(
+        'listing',
+        'title photos sellerPrice'
+      )
       .sort({
         createdAt: -1,
       });
@@ -167,6 +172,18 @@ exports.getMyChats = async (req, res) => {
           message.conversationId
         )
       ) {
+        // Already have a (more recent) entry for this conversation.
+        // If that entry doesn't have a listing attached yet but this
+        // older message does, backfill it so the thread still shows
+        // the product photo/title.
+        const existing = conversations.get(
+          message.conversationId
+        );
+
+        if (!existing.listing && message.listing) {
+          existing.listing = message.listing;
+        }
+
         continue;
       }
 
@@ -227,6 +244,9 @@ exports.getMyChats = async (req, res) => {
             isSender
               ? message.receiver
               : message.sender,
+
+          listing:
+            message.listing || null,
 
           lastMessageText:
             decryptedText,
@@ -390,6 +410,7 @@ exports.sendMessage = async (req, res) => {
     const {
       receiverId,
       text,
+      listingId,
     } = req.body;
 
     if (!receiverId) {
@@ -475,6 +496,11 @@ exports.sendMessage = async (req, res) => {
         receiver:
           receiverId,
 
+        // Optional - lets the Messages list show the product
+        // photo/title this conversation is about.
+        listing:
+          listingId || null,
+
         encryptedText:
           encrypted.encryptedText,
 
@@ -500,6 +526,12 @@ exports.sendMessage = async (req, res) => {
           'receiver',
         select:
           'name',
+      },
+      {
+        path:
+          'listing',
+        select:
+          'title photos sellerPrice',
       },
     ]);
 
@@ -664,4 +696,3 @@ exports.getConversation = async (
     });
   }
 };
-

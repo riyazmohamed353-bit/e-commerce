@@ -22,6 +22,15 @@ const messageSchema = new mongoose.Schema(
       index: true,
     },
 
+    // Which listing this message/conversation relates to (optional -
+    // older messages sent before this field existed will just have null).
+    listing: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Listing',
+      default: null,
+      index: true,
+    },
+
     // The actual message is NEVER stored as plain text.
     encryptedText: {
       type: String,
