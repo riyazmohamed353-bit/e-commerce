@@ -32,6 +32,301 @@ const CATEGORIES = [
   'Other',
 ];
 
+// ============================================================
+// CATEGORY-SPECIFIC FIELDS
+// ============================================================
+
+const CATEGORY_FIELDS = {
+  Mobile: [
+    {
+      key: 'storage',
+      label: 'Storage',
+      placeholder: 'Example: 128GB / 256GB / 512GB',
+    },
+    {
+      key: 'ram',
+      label: 'RAM',
+      placeholder: 'Example: 6GB / 8GB / 12GB',
+    },
+    {
+      key: 'ageMonths',
+      label: 'Age',
+      placeholder: 'Example: 18',
+      keyboardType: 'numeric',
+      suffix: 'months',
+    },
+    {
+      key: 'batteryHealth',
+      label: 'Battery Health',
+      placeholder: 'Example: 87',
+      keyboardType: 'numeric',
+      suffix: '%',
+    },
+  ],
+
+  Laptop: [
+    {
+      key: 'storage',
+      label: 'Storage',
+      placeholder: 'Example: 512GB SSD / 1TB SSD',
+    },
+    {
+      key: 'ram',
+      label: 'RAM',
+      placeholder: 'Example: 8GB / 16GB / 32GB',
+    },
+    {
+      key: 'processor',
+      label: 'Processor',
+      placeholder: 'Example: Intel i7 / Ryzen 7',
+    },
+    {
+      key: 'gpu',
+      label: 'Graphics / GPU',
+      placeholder: 'Example: RTX 4060 / Integrated',
+    },
+    {
+      key: 'screenSize',
+      label: 'Screen Size',
+      placeholder: 'Example: 15.6 inch',
+    },
+    {
+      key: 'ageMonths',
+      label: 'Age',
+      placeholder: 'Example: 24',
+      keyboardType: 'numeric',
+      suffix: 'months',
+    },
+    {
+      key: 'batteryHealth',
+      label: 'Battery Health',
+      placeholder: 'Example: 90',
+      keyboardType: 'numeric',
+      suffix: '%',
+    },
+  ],
+
+  Tablet: [
+    {
+      key: 'storage',
+      label: 'Storage',
+      placeholder: 'Example: 64GB / 128GB / 256GB',
+    },
+    {
+      key: 'ram',
+      label: 'RAM',
+      placeholder: 'Example: 4GB / 6GB / 8GB',
+    },
+    {
+      key: 'screenSize',
+      label: 'Screen Size',
+      placeholder: 'Example: 11 inch',
+    },
+    {
+      key: 'ageMonths',
+      label: 'Age',
+      placeholder: 'Example: 12',
+      keyboardType: 'numeric',
+      suffix: 'months',
+    },
+    {
+      key: 'batteryHealth',
+      label: 'Battery Health',
+      placeholder: 'Example: 90',
+      keyboardType: 'numeric',
+      suffix: '%',
+    },
+  ],
+
+  Smartwatch: [
+    {
+      key: 'storage',
+      label: 'Storage',
+      placeholder: 'Example: 32GB',
+    },
+    {
+      key: 'ram',
+      label: 'RAM',
+      placeholder: 'Example: 2GB',
+    },
+    {
+      key: 'screenSize',
+      label: 'Screen Size',
+      placeholder: 'Example: 1.9 inch',
+    },
+    {
+      key: 'compatibility',
+      label: 'Compatibility',
+      placeholder: 'Example: Android / iPhone / Both',
+    },
+    {
+      key: 'ageMonths',
+      label: 'Age',
+      placeholder: 'Example: 12',
+      keyboardType: 'numeric',
+      suffix: 'months',
+    },
+    {
+      key: 'batteryHealth',
+      label: 'Battery Health',
+      placeholder: 'Example: 85',
+      keyboardType: 'numeric',
+      suffix: '%',
+    },
+  ],
+
+  Headphones: [
+    {
+      key: 'headphoneType',
+      label: 'Headphone Type',
+      placeholder: 'Example: Wireless / Wired / TWS',
+    },
+    {
+      key: 'noiseCancellation',
+      label: 'Noise Cancellation',
+      placeholder: 'Example: Yes / No',
+    },
+    {
+      key: 'batteryLife',
+      label: 'Battery Life',
+      placeholder: 'Example: 30 hours',
+    },
+    {
+      key: 'compatibility',
+      label: 'Compatibility',
+      placeholder: 'Example: Android / iPhone / PC',
+    },
+    {
+      key: 'ageMonths',
+      label: 'Age',
+      placeholder: 'Example: 12',
+      keyboardType: 'numeric',
+      suffix: 'months',
+    },
+  ],
+
+  Camera: [
+    {
+      key: 'cameraType',
+      label: 'Camera Type',
+      placeholder: 'Example: DSLR / Mirrorless',
+    },
+    {
+      key: 'megapixel',
+      label: 'Megapixel',
+      placeholder: 'Example: 24MP',
+    },
+    {
+      key: 'lens',
+      label: 'Lens',
+      placeholder: 'Example: 18-55mm',
+    },
+    {
+      key: 'shutterCount',
+      label: 'Shutter Count',
+      placeholder: 'Example: 12000',
+      keyboardType: 'numeric',
+    },
+    {
+      key: 'storage',
+      label: 'Storage',
+      placeholder: 'Example: 128GB SD Card',
+    },
+    {
+      key: 'ageMonths',
+      label: 'Age',
+      placeholder: 'Example: 24',
+      keyboardType: 'numeric',
+      suffix: 'months',
+    },
+  ],
+
+  Gaming: [
+    {
+      key: 'console',
+      label: 'Gaming Device',
+      placeholder: 'Example: PS5 / Xbox / Gaming PC',
+    },
+    {
+      key: 'storage',
+      label: 'Storage',
+      placeholder: 'Example: 512GB / 1TB',
+    },
+    {
+      key: 'ram',
+      label: 'RAM',
+      placeholder: 'Example: 16GB / 32GB',
+    },
+    {
+      key: 'processor',
+      label: 'Processor',
+      placeholder: 'Example: Intel i5 / Ryzen 5',
+    },
+    {
+      key: 'gpu',
+      label: 'Graphics / GPU',
+      placeholder: 'Example: RTX 4060',
+    },
+    {
+      key: 'ageMonths',
+      label: 'Age',
+      placeholder: 'Example: 12',
+      keyboardType: 'numeric',
+      suffix: 'months',
+    },
+  ],
+
+  Other: [
+    {
+      key: 'storage',
+      label: 'Storage',
+      placeholder: 'Example: 256GB',
+    },
+    {
+      key: 'ram',
+      label: 'RAM',
+      placeholder: 'Example: 8GB',
+    },
+    {
+      key: 'ageMonths',
+      label: 'Age',
+      placeholder: 'Example: 12',
+      keyboardType: 'numeric',
+      suffix: 'months',
+    },
+  ],
+};
+
+// ============================================================
+// INITIAL SPECS
+// ============================================================
+
+const EMPTY_SPECS = {
+  storage: '',
+  ram: '',
+  gpu: '',
+  processor: '',
+  ageMonths: '',
+  batteryHealth: '',
+
+  screenSize: '',
+  cameraType: '',
+  megapixel: '',
+  lens: '',
+  shutterCount: '',
+
+  headphoneType: '',
+  noiseCancellation: '',
+  batteryLife: '',
+
+  console: '',
+  compatibility: '',
+};
+
+// ============================================================
+// SCREEN
+// ============================================================
+
 export default function CreateListingScreen({ navigation, route }) {
   // ============================================================
   // EDIT MODE
@@ -45,7 +340,7 @@ export default function CreateListingScreen({ navigation, route }) {
   const isEditMode = Boolean(editingListingId);
 
   // ============================================================
-  // FORM STATE
+  // BASIC FORM
   // ============================================================
 
   const [title, setTitle] = useState('');
@@ -54,25 +349,28 @@ export default function CreateListingScreen({ navigation, route }) {
   const [model, setModel] = useState('');
   const [sellerPrice, setSellerPrice] = useState('');
 
-  const [storage, setStorage] = useState('');
-  const [ram, setRam] = useState('');
-  const [ageMonths, setAgeMonths] = useState('');
-  const [batteryHealth, setBatteryHealth] = useState('');
+  const [specs, setSpecs] = useState(EMPTY_SPECS);
 
   const [conditionText, setConditionText] = useState('');
 
-  // Array of objects:
-  // {
-  //   uri: '...',
-  //   isNew: true/false
-  // }
   const [photos, setPhotos] = useState([]);
 
   const [loadingListing, setLoadingListing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // ============================================================
-  // LOAD EXISTING LISTING
+  // UPDATE SPEC
+  // ============================================================
+
+  const updateSpec = (key, value) => {
+    setSpecs((previous) => ({
+      ...previous,
+      [key]: value,
+    }));
+  };
+
+  // ============================================================
+  // LOAD LISTING FOR EDIT
   // ============================================================
 
   const loadListing = useCallback(async () => {
@@ -83,22 +381,8 @@ export default function CreateListingScreen({ navigation, route }) {
     try {
       setLoadingListing(true);
 
-      console.log(
-        '========================================'
-      );
-      console.log('LOADING EDIT LISTING');
-      console.log('LISTING ID:', editingListingId);
-      console.log(
-        '========================================'
-      );
-
       const response = await client.get(
         `/listings/${editingListingId}`
-      );
-
-      console.log(
-        'GET LISTING RESPONSE:',
-        response.data
       );
 
       const listing =
@@ -109,10 +393,6 @@ export default function CreateListingScreen({ navigation, route }) {
       if (!listing) {
         throw new Error('Listing not found.');
       }
-
-      // ----------------------------------------------------------
-      // BASIC DETAILS
-      // ----------------------------------------------------------
 
       setTitle(
         listing.title != null
@@ -144,39 +424,99 @@ export default function CreateListingScreen({ navigation, route }) {
           : ''
       );
 
-      // ----------------------------------------------------------
-      // SPECS
-      // ----------------------------------------------------------
+      // ========================================================
+      // LOAD SPECS
+      // ========================================================
 
-      const specs = listing.specs || {};
+      const existingSpecs = listing.specs || {};
 
-      setStorage(
-        specs.storage != null
-          ? String(specs.storage)
-          : ''
-      );
+      setSpecs({
+        ...EMPTY_SPECS,
 
-      setRam(
-        specs.ram != null
-          ? String(specs.ram)
-          : ''
-      );
+        storage:
+          existingSpecs.storage != null
+            ? String(existingSpecs.storage)
+            : '',
 
-      setAgeMonths(
-        specs.ageMonths != null
-          ? String(specs.ageMonths)
-          : ''
-      );
+        ram:
+          existingSpecs.ram != null
+            ? String(existingSpecs.ram)
+            : '',
 
-      setBatteryHealth(
-        specs.batteryHealth != null
-          ? String(specs.batteryHealth)
-          : ''
-      );
+        gpu:
+          existingSpecs.gpu != null
+            ? String(existingSpecs.gpu)
+            : '',
 
-      // ----------------------------------------------------------
+        processor:
+          existingSpecs.processor != null
+            ? String(existingSpecs.processor)
+            : '',
+
+        ageMonths:
+          existingSpecs.ageMonths != null
+            ? String(existingSpecs.ageMonths)
+            : '',
+
+        batteryHealth:
+          existingSpecs.batteryHealth != null
+            ? String(existingSpecs.batteryHealth)
+            : '',
+
+        screenSize:
+          existingSpecs.screenSize != null
+            ? String(existingSpecs.screenSize)
+            : '',
+
+        cameraType:
+          existingSpecs.cameraType != null
+            ? String(existingSpecs.cameraType)
+            : '',
+
+        megapixel:
+          existingSpecs.megapixel != null
+            ? String(existingSpecs.megapixel)
+            : '',
+
+        lens:
+          existingSpecs.lens != null
+            ? String(existingSpecs.lens)
+            : '',
+
+        shutterCount:
+          existingSpecs.shutterCount != null
+            ? String(existingSpecs.shutterCount)
+            : '',
+
+        headphoneType:
+          existingSpecs.headphoneType != null
+            ? String(existingSpecs.headphoneType)
+            : '',
+
+        noiseCancellation:
+          existingSpecs.noiseCancellation != null
+            ? String(existingSpecs.noiseCancellation)
+            : '',
+
+        batteryLife:
+          existingSpecs.batteryLife != null
+            ? String(existingSpecs.batteryLife)
+            : '',
+
+        console:
+          existingSpecs.console != null
+            ? String(existingSpecs.console)
+            : '',
+
+        compatibility:
+          existingSpecs.compatibility != null
+            ? String(existingSpecs.compatibility)
+            : '',
+      });
+
+      // ========================================================
       // DESCRIPTION
-      // ----------------------------------------------------------
+      // ========================================================
 
       setConditionText(
         listing.conditionText != null
@@ -184,14 +524,15 @@ export default function CreateListingScreen({ navigation, route }) {
           : ''
       );
 
-      // ----------------------------------------------------------
-      // EXISTING PHOTOS
-      // ----------------------------------------------------------
+      // ========================================================
+      // PHOTOS
+      // ========================================================
 
-      const existingPhotos =
-        Array.isArray(listing.photos)
-          ? listing.photos.filter(Boolean)
-          : [];
+      const existingPhotos = Array.isArray(
+        listing.photos
+      )
+        ? listing.photos.filter(Boolean)
+        : [];
 
       setPhotos(
         existingPhotos
@@ -201,24 +542,10 @@ export default function CreateListingScreen({ navigation, route }) {
             isNew: false,
           }))
       );
-
-      console.log(
-        'EXISTING PHOTOS:',
-        existingPhotos
-      );
     } catch (error) {
       console.log(
-        '========================================'
-      );
-
-      console.log(
         'LOAD LISTING ERROR:',
-        error.response?.data ||
-          error.message
-      );
-
-      console.log(
-        '========================================'
+        error.response?.data || error.message
       );
 
       Alert.alert(
@@ -232,17 +559,14 @@ export default function CreateListingScreen({ navigation, route }) {
   }, [editingListingId]);
 
   // ============================================================
-  // LOAD EDIT LISTING
+  // EDIT LOAD
   // ============================================================
 
   useEffect(() => {
     if (isEditMode) {
       loadListing();
     }
-  }, [
-    isEditMode,
-    loadListing,
-  ]);
+  }, [isEditMode, loadListing]);
 
   // ============================================================
   // PICK IMAGES
@@ -261,34 +585,22 @@ export default function CreateListingScreen({ navigation, route }) {
         return;
       }
 
-      // --------------------------------------------------------
-      // PERMISSION
-      // --------------------------------------------------------
-
       const permission =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (!permission.granted) {
         Alert.alert(
           'Permission Required',
-          'Please allow photo access to select product images.',
-          [
-            {
-              text: 'OK',
-            },
-          ]
+          'Please allow photo access to select product images.'
         );
 
         return;
       }
 
-      // --------------------------------------------------------
-      // IMAGE PICKER
-      // --------------------------------------------------------
-
       const result =
         await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ['images'],
+          mediaTypes:
+            ImagePicker.MediaTypeOptions.Images,
           allowsMultipleSelection: true,
           selectionLimit: remaining,
           quality: 0.8,
@@ -298,48 +610,33 @@ export default function CreateListingScreen({ navigation, route }) {
         return;
       }
 
-      const assets =
-        Array.isArray(result.assets)
-          ? result.assets
-          : [];
+      const assets = Array.isArray(
+        result.assets
+      )
+        ? result.assets
+        : [];
 
-      if (assets.length === 0) {
-        return;
-      }
-
-      const selectedUris =
-        assets
-          .map(
-            (asset) => asset?.uri
-          )
-          .filter(Boolean);
+      const selectedUris = assets
+        .map((asset) => asset?.uri)
+        .filter(Boolean);
 
       if (selectedUris.length === 0) {
         return;
       }
 
-      // --------------------------------------------------------
-      // REMOVE DUPLICATES
-      // --------------------------------------------------------
-
       setPhotos((previous) => {
-        const existingUris =
-          new Set(
-            previous.map(
-              (photo) => photo.uri
-            )
-          );
+        const existingUris = new Set(
+          previous.map((photo) => photo.uri)
+        );
 
-        const newPhotos =
-          selectedUris
-            .filter(
-              (uri) =>
-                !existingUris.has(uri)
-            )
-            .map((uri) => ({
-              uri,
-              isNew: true,
-            }));
+        const newPhotos = selectedUris
+          .filter(
+            (uri) => !existingUris.has(uri)
+          )
+          .map((uri) => ({
+            uri,
+            isNew: true,
+          }));
 
         return [
           ...previous,
@@ -373,14 +670,22 @@ export default function CreateListingScreen({ navigation, route }) {
   };
 
   // ============================================================
+  // CHANGE CATEGORY
+  // ============================================================
+
+  const handleCategoryChange = (newCategory) => {
+    setCategory(newCategory);
+
+    // Keep existing values that may be common,
+    // but clear device-specific fields.
+    setSpecs(EMPTY_SPECS);
+  };
+
+  // ============================================================
   // VALIDATION
   // ============================================================
 
   const validateForm = () => {
-    // ----------------------------------------------------------
-    // TITLE
-    // ----------------------------------------------------------
-
     if (!title.trim()) {
       Alert.alert(
         'Missing Title',
@@ -389,10 +694,6 @@ export default function CreateListingScreen({ navigation, route }) {
 
       return false;
     }
-
-    // ----------------------------------------------------------
-    // CATEGORY
-    // ----------------------------------------------------------
 
     if (!category.trim()) {
       Alert.alert(
@@ -403,10 +704,6 @@ export default function CreateListingScreen({ navigation, route }) {
       return false;
     }
 
-    // ----------------------------------------------------------
-    // PRICE
-    // ----------------------------------------------------------
-
     if (!sellerPrice.trim()) {
       Alert.alert(
         'Missing Price',
@@ -416,8 +713,7 @@ export default function CreateListingScreen({ navigation, route }) {
       return false;
     }
 
-    const price =
-      Number(sellerPrice);
+    const price = Number(sellerPrice);
 
     if (
       !Number.isFinite(price) ||
@@ -431,13 +727,14 @@ export default function CreateListingScreen({ navigation, route }) {
       return false;
     }
 
-    // ----------------------------------------------------------
-    // AGE
-    // ----------------------------------------------------------
+    // ==========================================================
+    // AGE VALIDATION
+    // ==========================================================
 
-    if (ageMonths.trim()) {
-      const age =
-        Number(ageMonths);
+    if (specs.ageMonths.trim()) {
+      const age = Number(
+        specs.ageMonths
+      );
 
       if (
         !Number.isFinite(age) ||
@@ -452,13 +749,14 @@ export default function CreateListingScreen({ navigation, route }) {
       }
     }
 
-    // ----------------------------------------------------------
-    // BATTERY
-    // ----------------------------------------------------------
+    // ==========================================================
+    // BATTERY VALIDATION
+    // ==========================================================
 
-    if (batteryHealth.trim()) {
-      const battery =
-        Number(batteryHealth);
+    if (specs.batteryHealth.trim()) {
+      const battery = Number(
+        specs.batteryHealth
+      );
 
       if (
         !Number.isFinite(battery) ||
@@ -474,11 +772,65 @@ export default function CreateListingScreen({ navigation, route }) {
       }
     }
 
+    // ==========================================================
+    // SHUTTER COUNT
+    // ==========================================================
+
+    if (specs.shutterCount.trim()) {
+      const shutterCount = Number(
+        specs.shutterCount
+      );
+
+      if (
+        !Number.isFinite(
+          shutterCount
+        ) ||
+        shutterCount < 0
+      ) {
+        Alert.alert(
+          'Invalid Shutter Count',
+          'Shutter count must be 0 or greater.'
+        );
+
+        return false;
+      }
+    }
+
     return true;
   };
 
   // ============================================================
-  // SUBMIT LISTING
+  // BUILD SPECS
+  // ============================================================
+
+  const buildSpecs = () => {
+    const result = {};
+
+    Object.keys(specs).forEach((key) => {
+      const value = specs[key];
+
+      if (
+        value !== null &&
+        value !== undefined &&
+        String(value).trim() !== ''
+      ) {
+        if (
+          key === 'ageMonths' ||
+          key === 'batteryHealth' ||
+          key === 'shutterCount'
+        ) {
+          result[key] = Number(value);
+        } else {
+          result[key] = String(value).trim();
+        }
+      }
+    });
+
+    return result;
+  };
+
+  // ============================================================
+  // SUBMIT
   // ============================================================
 
   const submitListing = async () => {
@@ -493,26 +845,9 @@ export default function CreateListingScreen({ navigation, route }) {
     try {
       setSubmitting(true);
 
-      // ========================================================
-      // IMPORTANT
-      // ========================================================
-      //
-      // DO NOT SEND:
-      //
-      // seller
-      // sellerId
-      // userId
-      //
-      // Backend should take seller from JWT.
-      //
-      // ========================================================
-
-      const photoUris =
-        photos
-          .map(
-            (photo) => photo.uri
-          )
-          .filter(Boolean);
+      const photoUris = photos
+        .map((photo) => photo.uri)
+        .filter(Boolean);
 
       const listingData = {
         title: title.trim(),
@@ -523,31 +858,14 @@ export default function CreateListingScreen({ navigation, route }) {
 
         model: model.trim(),
 
-        sellerPrice:
-          Number(sellerPrice),
+        sellerPrice: Number(
+          sellerPrice
+        ),
 
         conditionText:
           conditionText.trim(),
 
-        specs: {
-          storage:
-            storage.trim(),
-
-          ram:
-            ram.trim(),
-
-          ageMonths:
-            ageMonths.trim()
-              ? Number(ageMonths)
-              : null,
-
-          batteryHealth:
-            batteryHealth.trim()
-              ? Number(
-                  batteryHealth
-                )
-              : null,
-        },
+        specs: buildSpecs(),
 
         photos: photoUris,
       };
@@ -560,11 +878,6 @@ export default function CreateListingScreen({ navigation, route }) {
         isEditMode
           ? 'UPDATING LISTING'
           : 'CREATING LISTING'
-      );
-
-      console.log(
-        'LISTING ID:',
-        editingListingId
       );
 
       console.log(
@@ -581,12 +894,12 @@ export default function CreateListingScreen({ navigation, route }) {
       );
 
       // ========================================================
-      // EDIT
+      // UPDATE
       // ========================================================
 
       if (isEditMode) {
         const response =
-          await client.put(
+          await client.patch(
             `/listings/${editingListingId}`,
             listingData
           );
@@ -635,10 +948,6 @@ export default function CreateListingScreen({ navigation, route }) {
       const newListingId =
         createdListing?._id ||
         createdListing?.id;
-
-      // ========================================================
-      // SUCCESS
-      // ========================================================
 
       Alert.alert(
         'Listing Created',
@@ -698,10 +1007,6 @@ export default function CreateListingScreen({ navigation, route }) {
       const serverMessage =
         error.response?.data?.message;
 
-      // --------------------------------------------------------
-      // 401
-      // --------------------------------------------------------
-
       if (status === 401) {
         Alert.alert(
           'Login Required',
@@ -710,10 +1015,6 @@ export default function CreateListingScreen({ navigation, route }) {
 
         return;
       }
-
-      // --------------------------------------------------------
-      // 400
-      // --------------------------------------------------------
 
       if (status === 400) {
         Alert.alert(
@@ -725,10 +1026,6 @@ export default function CreateListingScreen({ navigation, route }) {
         return;
       }
 
-      // --------------------------------------------------------
-      // 403
-      // --------------------------------------------------------
-
       if (status === 403) {
         Alert.alert(
           'Permission Denied',
@@ -738,10 +1035,6 @@ export default function CreateListingScreen({ navigation, route }) {
 
         return;
       }
-
-      // --------------------------------------------------------
-      // 404
-      // --------------------------------------------------------
 
       if (status === 404) {
         Alert.alert(
@@ -753,10 +1046,6 @@ export default function CreateListingScreen({ navigation, route }) {
         return;
       }
 
-      // --------------------------------------------------------
-      // 500
-      // --------------------------------------------------------
-
       if (status >= 500) {
         Alert.alert(
           'Server Error',
@@ -767,14 +1056,9 @@ export default function CreateListingScreen({ navigation, route }) {
         return;
       }
 
-      // --------------------------------------------------------
-      // NETWORK ERROR
-      // --------------------------------------------------------
-
       if (
         !error.response ||
-        error.code ===
-          'ERR_NETWORK'
+        error.code === 'ERR_NETWORK'
       ) {
         Alert.alert(
           'Network Error',
@@ -783,10 +1067,6 @@ export default function CreateListingScreen({ navigation, route }) {
 
         return;
       }
-
-      // --------------------------------------------------------
-      // OTHER
-      // --------------------------------------------------------
 
       Alert.alert(
         isEditMode
@@ -802,7 +1082,7 @@ export default function CreateListingScreen({ navigation, route }) {
   };
 
   // ============================================================
-  // LOADING EXISTING LISTING
+  // LOADING
   // ============================================================
 
   if (loadingListing) {
@@ -829,7 +1109,16 @@ export default function CreateListingScreen({ navigation, route }) {
   }
 
   // ============================================================
-  // MAIN UI
+  // CURRENT CATEGORY FIELDS
+  // ============================================================
+
+  const currentFields =
+    CATEGORY_FIELDS[
+      category
+    ] || [];
+
+  // ============================================================
+  // UI
   // ============================================================
 
   return (
@@ -871,7 +1160,7 @@ export default function CreateListingScreen({ navigation, route }) {
           >
             {isEditMode
               ? 'Edit Listing'
-              : 'Create Listing'}
+              : 'Sell a Device'}
           </Text>
 
           <Text
@@ -886,7 +1175,7 @@ export default function CreateListingScreen({ navigation, route }) {
         </View>
 
         {/* ======================================================
-            AUTH INFO
+            SELLER
         ====================================================== */}
 
         <View
@@ -1061,7 +1350,23 @@ export default function CreateListingScreen({ navigation, route }) {
 
         <InputField
           label="Product Title *"
-          placeholder="Example: iPhone 14 Pro 256GB"
+          placeholder={
+            category === 'Laptop'
+              ? 'Example: ASUS ROG Strix G16'
+              : category === 'Tablet'
+              ? 'Example: iPad Air 5th Gen'
+              : category === 'Smartwatch'
+              ? 'Example: Apple Watch Series 9'
+              : category === 'Headphones'
+              ? 'Example: Sony WH-1000XM5'
+              : category === 'Camera'
+              ? 'Example: Canon EOS R10'
+              : category === 'Gaming'
+              ? 'Example: PS5 Digital Edition'
+              : category === 'Mobile'
+              ? 'Example: iPhone 14 Pro 256GB'
+              : 'Example: Used electronic device'
+          }
           value={title}
           onChangeText={
             setTitle
@@ -1088,8 +1393,7 @@ export default function CreateListingScreen({ navigation, route }) {
           {CATEGORIES.map(
             (item) => {
               const selected =
-                category ===
-                item;
+                category === item;
 
               return (
                 <TouchableOpacity
@@ -1100,7 +1404,7 @@ export default function CreateListingScreen({ navigation, route }) {
                       styles.categoryButtonSelected,
                   ]}
                   onPress={() =>
-                    setCategory(
+                    handleCategoryChange(
                       item
                     )
                   }
@@ -1127,7 +1431,17 @@ export default function CreateListingScreen({ navigation, route }) {
 
         <InputField
           label="Brand"
-          placeholder="Example: Apple"
+          placeholder={
+            category === 'Laptop'
+              ? 'Example: ASUS / Dell / HP / Lenovo'
+              : category === 'Mobile'
+              ? 'Example: Apple / Samsung / OnePlus'
+              : category === 'Camera'
+              ? 'Example: Canon / Sony / Nikon'
+              : category === 'Headphones'
+              ? 'Example: Sony / Bose / JBL'
+              : 'Example: Apple / Samsung'
+          }
           value={brand}
           onChangeText={
             setBrand
@@ -1140,7 +1454,21 @@ export default function CreateListingScreen({ navigation, route }) {
 
         <InputField
           label="Model"
-          placeholder="Example: iPhone 14 Pro"
+          placeholder={
+            category === 'Laptop'
+              ? 'Example: ROG Strix G16'
+              : category === 'Tablet'
+              ? 'Example: iPad Air 5'
+              : category === 'Camera'
+              ? 'Example: EOS R10'
+              : category === 'Headphones'
+              ? 'Example: WH-1000XM5'
+              : category === 'Gaming'
+              ? 'Example: PS5 Slim'
+              : category === 'Mobile'
+              ? 'Example: iPhone 14 Pro'
+              : 'Example: Device model'
+          }
           value={model}
           onChangeText={
             setModel
@@ -1153,7 +1481,15 @@ export default function CreateListingScreen({ navigation, route }) {
 
         <InputField
           label="Selling Price *"
-          placeholder="Example: 45000"
+          placeholder={
+            category === 'Laptop'
+              ? 'Example: 65000'
+              : category === 'Mobile'
+              ? 'Example: 45000'
+              : category === 'Camera'
+              ? 'Example: 55000'
+              : 'Example: 25000'
+          }
           value={sellerPrice}
           onChangeText={
             setSellerPrice
@@ -1163,58 +1499,87 @@ export default function CreateListingScreen({ navigation, route }) {
         />
 
         {/* ======================================================
-            SPECIFICATIONS
+            DYNAMIC SPECIFICATIONS
         ====================================================== */}
 
-        <Text
-          style={
-            styles.sectionTitle
-          }
-        >
-          Specifications
-        </Text>
+        {category && (
+          <>
+            <Text
+              style={
+                styles.sectionTitle
+              }
+            >
+              {category} Specifications
+            </Text>
 
-        <InputField
-          label="Storage"
-          placeholder="Example: 256GB"
-          value={storage}
-          onChangeText={
-            setStorage
-          }
-        />
+            <Text
+              style={
+                styles.sectionSubtitle
+              }
+            >
+              Enter details specific to your{' '}
+              {category.toLowerCase()}.
+            </Text>
 
-        <InputField
-          label="RAM"
-          placeholder="Example: 8GB"
-          value={ram}
-          onChangeText={
-            setRam
-          }
-        />
+            {currentFields.map(
+              (field) => (
+                <InputField
+                  key={field.key}
+                  label={field.label}
+                  placeholder={
+                    field.placeholder
+                  }
+                  value={
+                    specs[
+                      field.key
+                    ] || ''
+                  }
+                  onChangeText={(
+                    value
+                  ) =>
+                    updateSpec(
+                      field.key,
+                      value
+                    )
+                  }
+                  keyboardType={
+                    field.keyboardType
+                  }
+                  suffix={
+                    field.suffix
+                  }
+                />
+              )
+            )}
+          </>
+        )}
 
-        <InputField
-          label="Age"
-          placeholder="Example: 18"
-          value={ageMonths}
-          onChangeText={
-            setAgeMonths
-          }
-          keyboardType="numeric"
-          suffix="months"
-        />
+        {/* ======================================================
+            SELECT CATEGORY MESSAGE
+        ====================================================== */}
 
-        <InputField
-          label="Battery Health"
-          placeholder="Example: 87"
-          value={
-            batteryHealth
-          }
-          onChangeText={
-            setBatteryHealth
-          }
-          keyboardType="numeric"
-          suffix="%"
-        />
+        {!category && (
+          <View
+            style={
+              styles.selectCategoryBox
+            }
+          >
+            <Ionicons
+              name="options-outline"
+              size={24}
+              color="#2563eb"
+            />
+
+            <Text
+              style={
+                styles.selectCategoryText
+              }
+            >
+              Select a category above to see
+              device-specific specifications.
+            </Text>
+          </View>
+        )}
 
         {/* ======================================================
             DESCRIPTION
@@ -1232,7 +1597,15 @@ export default function CreateListingScreen({ navigation, route }) {
           style={
             styles.textArea
           }
-          placeholder="Describe condition, accessories, warranty, etc."
+          placeholder={
+            category === 'Laptop'
+              ? 'Describe laptop condition, keyboard, display, charger, warranty, etc.'
+              : category === 'Mobile'
+              ? 'Describe phone condition, display, battery, accessories, warranty, etc.'
+              : category === 'Camera'
+              ? 'Describe camera condition, lens, accessories, warranty, etc.'
+              : 'Describe condition, accessories, warranty, etc.'
+          }
           placeholderTextColor="#94a3b8"
           value={
             conditionText
@@ -1246,7 +1619,7 @@ export default function CreateListingScreen({ navigation, route }) {
         />
 
         {/* ======================================================
-            AUTH INFORMATION
+            INFO
         ====================================================== */}
 
         <View
@@ -1342,7 +1715,7 @@ export default function CreateListingScreen({ navigation, route }) {
 }
 
 // ============================================================
-// INPUT FIELD
+// REUSABLE INPUT
 // ============================================================
 
 function InputField({
@@ -1422,382 +1795,364 @@ function InputField({
 // STYLES
 // ============================================================
 
-const styles =
-  StyleSheet.create({
-    keyboardContainer: {
-      flex: 1,
-      backgroundColor:
-        '#f8fafc',
-    },
+const styles = StyleSheet.create({
+  keyboardContainer: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
 
-    container: {
-      flex: 1,
-      backgroundColor:
-        '#f8fafc',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
 
-    contentContainer: {
-      padding: 16,
-      paddingBottom: 40,
-    },
+  contentContainer: {
+    padding: 16,
+    paddingBottom: 40,
+  },
 
-    // ========================================================
-    // LOADING
-    // ========================================================
+  // ==========================================================
+  // LOADING
+  // ==========================================================
 
-    loadingContainer: {
-      flex: 1,
-      justifyContent:
-        'center',
-      alignItems:
-        'center',
-      backgroundColor:
-        '#f8fafc',
-    },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+  },
 
-    loadingText: {
-      marginTop: 12,
-      color: '#64748b',
-      fontSize: 15,
-    },
+  loadingText: {
+    marginTop: 12,
+    color: '#64748b',
+    fontSize: 15,
+  },
 
-    // ========================================================
-    // HEADER
-    // ========================================================
+  // ==========================================================
+  // HEADER
+  // ==========================================================
 
-    header: {
-      marginBottom: 18,
-    },
+  header: {
+    marginBottom: 18,
+  },
 
-    headerTitle: {
-      fontSize: 27,
-      fontWeight: '900',
-      color: '#111827',
-    },
+  headerTitle: {
+    fontSize: 27,
+    fontWeight: '900',
+    color: '#111827',
+  },
 
-    headerSubtitle: {
-      marginTop: 5,
-      color: '#64748b',
-      fontSize: 14,
-    },
+  headerSubtitle: {
+    marginTop: 5,
+    color: '#64748b',
+    fontSize: 14,
+  },
 
-    // ========================================================
-    // SELLER
-    // ========================================================
+  // ==========================================================
+  // SELLER
+  // ==========================================================
 
-    sellerInfo: {
-      flexDirection:
-        'row',
-      alignItems:
-        'center',
-      backgroundColor:
-        '#eff6ff',
-      borderWidth: 1,
-      borderColor:
-        '#bfdbfe',
-      borderRadius: 14,
-      padding: 13,
-      marginBottom: 22,
-    },
+  sellerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    borderRadius: 14,
+    padding: 13,
+    marginBottom: 22,
+  },
 
-    sellerIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor:
-        '#dbeafe',
-      alignItems:
-        'center',
-      justifyContent:
-        'center',
-      marginRight: 11,
-    },
+  sellerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#dbeafe',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 11,
+  },
 
-    sellerInfoText: {
-      flex: 1,
-    },
+  sellerInfoText: {
+    flex: 1,
+  },
 
-    sellerLabel: {
-      color: '#64748b',
-      fontSize: 12,
-    },
+  sellerLabel: {
+    color: '#64748b',
+    fontSize: 12,
+  },
 
-    sellerUser: {
-      color: '#111827',
-      fontSize: 14,
-      fontWeight: '800',
-      marginTop: 2,
-    },
+  sellerUser: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '800',
+    marginTop: 2,
+  },
 
-    // ========================================================
-    // SECTIONS
-    // ========================================================
+  // ==========================================================
+  // SECTIONS
+  // ==========================================================
 
-    sectionTitle: {
-      fontSize: 19,
-      fontWeight: '900',
-      color: '#111827',
-      marginTop: 8,
-      marginBottom: 4,
-    },
+  sectionTitle: {
+    fontSize: 19,
+    fontWeight: '900',
+    color: '#111827',
+    marginTop: 8,
+    marginBottom: 4,
+  },
 
-    sectionSubtitle: {
-      color: '#64748b',
-      fontSize: 13,
-      marginBottom: 10,
-    },
+  sectionSubtitle: {
+    color: '#64748b',
+    fontSize: 13,
+    marginBottom: 10,
+  },
 
-    // ========================================================
-    // PHOTOS
-    // ========================================================
+  // ==========================================================
+  // PHOTOS
+  // ==========================================================
 
-    photoScroll: {
-      marginBottom: 15,
-    },
+  photoScroll: {
+    marginBottom: 15,
+  },
 
-    photoWrapper: {
-      width: 110,
-      height: 110,
-      borderRadius: 12,
-      marginRight: 10,
-      overflow: 'hidden',
-      backgroundColor:
-        '#e2e8f0',
-      position: 'relative',
-    },
+  photoWrapper: {
+    width: 110,
+    height: 110,
+    borderRadius: 12,
+    marginRight: 10,
+    overflow: 'hidden',
+    backgroundColor: '#e2e8f0',
+    position: 'relative',
+  },
 
-    photo: {
-      width: '100%',
-      height: '100%',
-    },
+  photo: {
+    width: '100%',
+    height: '100%',
+  },
 
-    removePhoto: {
-      position: 'absolute',
-      right: 5,
-      top: 5,
-      width: 27,
-      height: 27,
-      borderRadius: 14,
-      backgroundColor:
-        'rgba(220,38,38,0.92)',
-      alignItems:
-        'center',
-      justifyContent:
-        'center',
-    },
+  removePhoto: {
+    position: 'absolute',
+    right: 5,
+    top: 5,
+    width: 27,
+    height: 27,
+    borderRadius: 14,
+    backgroundColor: 'rgba(220,38,38,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-    newPhotoBadge: {
-      position: 'absolute',
-      left: 5,
-      bottom: 5,
-      backgroundColor:
-        '#16a34a',
-      borderRadius: 5,
-      paddingHorizontal: 6,
-      paddingVertical: 3,
-    },
+  newPhotoBadge: {
+    position: 'absolute',
+    left: 5,
+    bottom: 5,
+    backgroundColor: '#16a34a',
+    borderRadius: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+  },
 
-    newPhotoText: {
-      color: '#fff',
-      fontSize: 8,
-      fontWeight: '900',
-    },
+  newPhotoText: {
+    color: '#fff',
+    fontSize: 8,
+    fontWeight: '900',
+  },
 
-    addPhoto: {
-      width: 110,
-      height: 110,
-      borderRadius: 12,
-      borderWidth: 1.5,
-      borderColor:
-        '#93c5fd',
-      borderStyle: 'dashed',
-      backgroundColor:
-        '#eff6ff',
-      alignItems:
-        'center',
-      justifyContent:
-        'center',
-    },
+  addPhoto: {
+    width: 110,
+    height: 110,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#93c5fd',
+    borderStyle: 'dashed',
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-    addPhotoText: {
-      color: '#2563eb',
-      fontWeight: '700',
-      fontSize: 12,
-      marginTop: 6,
-    },
+  addPhotoText: {
+    color: '#2563eb',
+    fontWeight: '700',
+    fontSize: 12,
+    marginTop: 6,
+  },
 
-    // ========================================================
-    // INPUTS
-    // ========================================================
+  // ==========================================================
+  // INPUTS
+  // ==========================================================
 
-    inputContainer: {
-      marginTop: 15,
-    },
+  inputContainer: {
+    marginTop: 15,
+  },
 
-    inputLabel: {
-      fontSize: 14,
-      fontWeight: '800',
-      color: '#334155',
-      marginBottom: 7,
-    },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#334155',
+    marginBottom: 7,
+  },
 
-    inputWrapper: {
-      minHeight: 50,
-      flexDirection:
-        'row',
-      alignItems:
-        'center',
-      backgroundColor:
-        '#fff',
-      borderWidth: 1,
-      borderColor:
-        '#cbd5e1',
-      borderRadius: 11,
-    },
+  inputWrapper: {
+    minHeight: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 11,
+  },
 
-    input: {
-      flex: 1,
-      minHeight: 48,
-      paddingHorizontal: 13,
-      color: '#111827',
-      fontSize: 15,
-    },
+  input: {
+    flex: 1,
+    minHeight: 48,
+    paddingHorizontal: 13,
+    color: '#111827',
+    fontSize: 15,
+  },
 
-    inputWithPrefix: {
-      paddingLeft: 4,
-    },
+  inputWithPrefix: {
+    paddingLeft: 4,
+  },
 
-    prefix: {
-      color: '#334155',
-      fontSize: 16,
-      fontWeight: '800',
-      marginLeft: 13,
-    },
+  prefix: {
+    color: '#334155',
+    fontSize: 16,
+    fontWeight: '800',
+    marginLeft: 13,
+  },
 
-    suffix: {
-      color: '#64748b',
-      fontSize: 13,
-      fontWeight: '700',
-      marginRight: 13,
-    },
+  suffix: {
+    color: '#64748b',
+    fontSize: 13,
+    fontWeight: '700',
+    marginRight: 13,
+  },
 
-    // ========================================================
-    // CATEGORY
-    // ========================================================
+  // ==========================================================
+  // CATEGORY
+  // ==========================================================
 
-    categoryContainer: {
-      flexDirection:
-        'row',
-      flexWrap:
-        'wrap',
-      marginTop: 5,
-    },
+  categoryContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 5,
+  },
 
-    categoryButton: {
-      paddingHorizontal: 13,
-      paddingVertical: 9,
-      borderRadius: 20,
-      borderWidth: 1,
-      borderColor:
-        '#cbd5e1',
-      backgroundColor:
-        '#fff',
-      marginRight: 8,
-      marginBottom: 8,
-    },
+  categoryButton: {
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    backgroundColor: '#fff',
+    marginRight: 8,
+    marginBottom: 8,
+  },
 
-    categoryButtonSelected: {
-      backgroundColor:
-        '#2563eb',
-      borderColor:
-        '#2563eb',
-    },
+  categoryButtonSelected: {
+    backgroundColor: '#2563eb',
+    borderColor: '#2563eb',
+  },
 
-    categoryText: {
-      color: '#475569',
-      fontSize: 13,
-      fontWeight: '700',
-    },
+  categoryText: {
+    color: '#475569',
+    fontSize: 13,
+    fontWeight: '700',
+  },
 
-    categoryTextSelected: {
-      color: '#fff',
-    },
+  categoryTextSelected: {
+    color: '#fff',
+  },
 
-    // ========================================================
-    // DESCRIPTION
-    // ========================================================
+  // ==========================================================
+  // SELECT CATEGORY
+  // ==========================================================
 
-    textArea: {
-      minHeight: 130,
-      backgroundColor:
-        '#fff',
-      borderWidth: 1,
-      borderColor:
-        '#cbd5e1',
-      borderRadius: 11,
-      padding: 13,
-      color: '#111827',
-      fontSize: 15,
-    },
+  selectCategoryBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    borderRadius: 11,
+    padding: 13,
+    marginTop: 18,
+  },
 
-    // ========================================================
-    // INFO
-    // ========================================================
+  selectCategoryText: {
+    flex: 1,
+    color: '#1e40af',
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
+    marginLeft: 9,
+  },
 
-    infoBox: {
-      flexDirection:
-        'row',
-      alignItems:
-        'flex-start',
-      backgroundColor:
-        '#eff6ff',
-      borderWidth: 1,
-      borderColor:
-        '#bfdbfe',
-      borderRadius: 11,
-      padding: 12,
-      marginTop: 18,
-    },
+  // ==========================================================
+  // DESCRIPTION
+  // ==========================================================
 
-    infoText: {
-      flex: 1,
-      color: '#1e40af',
-      fontSize: 13,
-      lineHeight: 19,
-      fontWeight: '600',
-      marginLeft: 9,
-    },
+  textArea: {
+    minHeight: 130,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 11,
+    padding: 13,
+    color: '#111827',
+    fontSize: 15,
+  },
 
-    // ========================================================
-    // SUBMIT
-    // ========================================================
+  // ==========================================================
+  // INFO
+  // ==========================================================
 
-    submitButton: {
-      minHeight: 56,
-      flexDirection:
-        'row',
-      alignItems:
-        'center',
-      justifyContent:
-        'center',
-      backgroundColor:
-        '#2563eb',
-      borderRadius: 13,
-      marginTop: 22,
-    },
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    borderRadius: 11,
+    padding: 12,
+    marginTop: 18,
+  },
 
-    disabledButton: {
-      opacity: 0.55,
-    },
+  infoText: {
+    flex: 1,
+    color: '#1e40af',
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
+    marginLeft: 9,
+  },
 
-    submitText: {
-      color: '#fff',
-      fontSize: 16,
-      fontWeight: '900',
-      marginLeft: 9,
-    },
+  // ==========================================================
+  // SUBMIT
+  // ==========================================================
 
-    bottomSpace: {
-      height: 20,
-    },
-  });
+  submitButton: {
+    minHeight: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2563eb',
+    borderRadius: 13,
+    marginTop: 22,
+  },
+
+  disabledButton: {
+    opacity: 0.55,
+  },
+
+  submitText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '900',
+    marginLeft: 9,
+  },
+
+  bottomSpace: {
+    height: 20,
+  },
+});

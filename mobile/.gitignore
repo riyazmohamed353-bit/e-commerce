@@ -11,3 +11,5 @@ web-build/
 ../backend/.env.backup
 
 android/app/debug.keystore
+.env 
+.env 
