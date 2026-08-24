@@ -1,10 +1,24 @@
 const Listing = require('../models/Listing');
+const User = require('../models/User');
 
 // Create listing (AI fields get filled separately via /api/ai endpoints,
 // then the app calls PATCH to attach them - keeps this endpoint fast)
 exports.createListing = async (req, res) => {
   try {
-    const listing = await Listing.create({ ...req.body, seller: req.userId });
+    const payload = { ...req.body, seller: req.userId };
+
+    // Fall back to the seller's profile location if this listing didn't
+    // specify its own - keeps location-based search working even for
+    // clients that don't send pincode/city explicitly.
+    if (!payload.pincode || !payload.city) {
+      const seller = await User.findById(req.userId).select('pincode city');
+      if (seller) {
+        payload.pincode = payload.pincode || seller.pincode;
+        payload.city = payload.city || seller.city;
+      }
+    }
+
+    const listing = await Listing.create(payload);
     res.status(201).json(listing);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -13,13 +27,22 @@ exports.createListing = async (req, res) => {
 
 exports.getListings = async (req, res) => {
   try {
-    const { category, minPrice, maxPrice, brand, q, minRam } = req.query;
+    const { category, minPrice, maxPrice, brand, q, minRam, pincode, city } = req.query;
     const filter = { status: 'active' };
     // Case-insensitive, partial match - AI-parsed search terms ("smartphone")
     // won't always exactly match what a seller typed ("phone"), so an exact
     // equality check here was silently returning zero results.
     if (category) filter.category = new RegExp(category, 'i');
     if (brand) filter.brand = new RegExp(brand, 'i');
+    if (city) filter.city = new RegExp(city, 'i');
+    if (pincode) {
+      // Indian PIN codes: the first 3 digits identify the broader postal
+      // region/sorting district. Matching on that prefix gives "near you"
+      // style results without needing a geocoding API - an exact 6-digit
+      // filter would be too narrow and return almost nothing.
+      const areaPrefix = String(pincode).slice(0, 3);
+      filter.pincode = new RegExp(`^${areaPrefix}`);
+    }
     if (minPrice || maxPrice) {
       filter.sellerPrice = {};
       if (minPrice) filter.sellerPrice.$gte = Number(minPrice);

@@ -2,11 +2,65 @@ const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema(
   {
-    chat: { type: String, required: true }, // room id, e.g. `${listingId}_${buyerId}_${sellerId}`
-    sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    text: { type: String, required: true },
+    conversationId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+
+    receiver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+
+    // The actual message is NEVER stored as plain text.
+    encryptedText: {
+      type: String,
+      required: true,
+    },
+
+    // AES-GCM initialization vector
+    iv: {
+      type: String,
+      required: true,
+    },
+
+    // AES-GCM authentication tag
+    authTag: {
+      type: String,
+      required: true,
+    },
+
+    // Message status
+    status: {
+      type: String,
+      enum: ['sent', 'delivered', 'read'],
+      default: 'sent',
+    },
+
+    readAt: {
+      type: Date,
+      default: null,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
+
+// Helpful for loading conversations
+messageSchema.index({
+  conversationId: 1,
+  createdAt: 1,
+});
 
 module.exports = mongoose.model('Message', messageSchema);

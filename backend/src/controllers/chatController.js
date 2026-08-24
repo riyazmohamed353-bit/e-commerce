@@ -1,71 +1,667 @@
-const Chat = require('../models/Chat');
 const Message = require('../models/Message');
-const Listing = require('../models/Listing');
+const User = require('../models/User');
 
-// POST /api/chat/start  { listingId }
-// Finds the existing buyer<->seller chat for this listing, or creates it.
-// Called when a buyer taps "Message Seller" on a listing.
+const {
+  encryptMessage,
+  decryptMessage,
+} = require('../services/messageEncryption');
+
+
+// ============================================================
+// HELPER
+// ============================================================
+
+function createConversationId(userA, userB) {
+  const ids = [
+    String(userA),
+    String(userB),
+  ].sort();
+
+  return `${ids[0]}_${ids[1]}`;
+}
+
+
+// ============================================================
+// FORMAT MESSAGE
+// ============================================================
+
+function formatMessage(message) {
+  return {
+    _id: message._id,
+    conversationId: message.conversationId,
+
+    sender: message.sender,
+    receiver: message.receiver,
+
+    text: decryptMessage(
+      message.encryptedText,
+      message.iv,
+      message.authTag
+    ),
+
+    status: message.status,
+
+    createdAt: message.createdAt,
+    updatedAt: message.updatedAt,
+
+    readAt: message.readAt,
+  };
+}
+
+
+// ============================================================
+// START CHAT
+// POST /api/chat/start
+//
+// Body:
+// {
+//   sellerId: "..."
+// }
+// ============================================================
+
 exports.startChat = async (req, res) => {
   try {
-    const { listingId } = req.body;
-    if (!listingId) return res.status(400).json({ message: 'listingId required' });
+    const currentUserId = req.userId;
 
-    const listing = await Listing.findById(listingId);
-    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+    const {
+      sellerId,
+    } = req.body;
 
-    if (listing.seller.toString() === req.userId) {
-      return res.status(400).json({ message: "You can't message yourself about your own listing" });
+    if (!sellerId) {
+      return res.status(400).json({
+        message: 'sellerId is required',
+      });
     }
 
-    let chat = await Chat.findOne({ listing: listingId, buyer: req.userId });
-    if (!chat) {
-      chat = await Chat.create({ listing: listingId, buyer: req.userId, seller: listing.seller });
+    if (
+      String(currentUserId) ===
+      String(sellerId)
+    ) {
+      return res.status(400).json({
+        message: 'You cannot start a chat with yourself',
+      });
     }
 
-    const populated = await chat.populate([
-      { path: 'seller', select: 'name' },
-      { path: 'buyer', select: 'name' },
-      { path: 'listing', select: 'title photos' },
-    ]);
+    const seller = await User.findById(
+      sellerId
+    ).select('_id name email');
 
-    res.json(populated);
+    if (!seller) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    const conversationId =
+      createConversationId(
+        currentUserId,
+        sellerId
+      );
+
+    return res.json({
+      _id: conversationId,
+      id: conversationId,
+      conversationId,
+
+      buyer: {
+        _id: currentUserId,
+      },
+
+      seller: {
+        _id: seller._id,
+        name: seller.name,
+      },
+    });
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(
+      'START CHAT ERROR:',
+      err
+    );
+
+    return res.status(500).json({
+      message:
+        err.message ||
+        'Could not start chat',
+    });
   }
 };
 
-// GET /api/chat/mine - every conversation the current user is part of,
-// either as the buyer or as the seller. This is what powers the Messages/Inbox
-// screen - without it, a seller has no way to discover that a buyer messaged them.
+
+// ============================================================
+// GET MY CHATS
+// GET /api/chat/mine
+// ============================================================
+
 exports.getMyChats = async (req, res) => {
   try {
-    const chats = await Chat.find({
-      $or: [{ buyer: req.userId }, { seller: req.userId }],
+    const userId = req.userId;
+
+    const messages = await Message.find({
+      $or: [
+        {
+          sender: userId,
+        },
+        {
+          receiver: userId,
+        },
+      ],
     })
-      .populate('buyer', 'name')
-      .populate('seller', 'name')
-      .populate('listing', 'title photos')
-      .sort({ lastMessageAt: -1, updatedAt: -1 });
+      .populate(
+        'sender',
+        'name'
+      )
+      .populate(
+        'receiver',
+        'name'
+      )
+      .sort({
+        createdAt: -1,
+      });
 
-    res.json(chats);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+    const conversations = new Map();
 
-// GET /api/chat/:chatId/messages - message history (real-time new messages
-// come via Socket.io, this is just the initial load).
-exports.getHistory = async (req, res) => {
-  try {
-    const chat = await Chat.findById(req.params.chatId);
-    if (!chat) return res.status(404).json({ message: 'Chat not found' });
-    if (chat.buyer.toString() !== req.userId && chat.seller.toString() !== req.userId) {
-      return res.status(403).json({ message: 'Not part of this chat' });
+    for (const message of messages) {
+      if (
+        conversations.has(
+          message.conversationId
+        )
+      ) {
+        continue;
+      }
+
+      const senderId =
+        message.sender?._id ||
+        message.sender;
+
+      const receiverId =
+        message.receiver?._id ||
+        message.receiver;
+
+      const isSender =
+        String(senderId) ===
+        String(userId);
+
+      const otherUser = isSender
+        ? message.receiver
+        : message.sender;
+
+      if (!otherUser) {
+        continue;
+      }
+
+      let decryptedText = '';
+
+      try {
+        decryptedText =
+          decryptMessage(
+            message.encryptedText,
+            message.iv,
+            message.authTag
+          );
+      } catch (decryptError) {
+        console.error(
+          'MESSAGE DECRYPT ERROR:',
+          decryptError
+        );
+
+        decryptedText =
+          '[Message unavailable]';
+      }
+
+      conversations.set(
+        message.conversationId,
+        {
+          _id:
+            message.conversationId,
+
+          conversationId:
+            message.conversationId,
+
+          buyer:
+            isSender
+              ? message.sender
+              : message.receiver,
+
+          seller:
+            isSender
+              ? message.receiver
+              : message.sender,
+
+          lastMessageText:
+            decryptedText,
+
+          lastMessageAt:
+            message.createdAt,
+
+          lastMessageStatus:
+            message.status,
+
+          user: {
+            _id:
+              otherUser._id,
+
+            name:
+              otherUser.name ||
+              'User',
+          },
+        }
+      );
     }
 
-    const messages = await Message.find({ chat: req.params.chatId }).sort({ createdAt: 1 });
-    res.json(messages);
+    return res.json(
+      Array.from(
+        conversations.values()
+      )
+    );
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(
+      'GET MY CHATS ERROR:',
+      err
+    );
+
+    return res.status(500).json({
+      message:
+        err.message ||
+        'Could not load chats',
+    });
   }
 };
+
+
+// ============================================================
+// GET MESSAGES
+// GET /api/chat/:chatId/messages
+// ============================================================
+
+exports.getMessages = async (req, res) => {
+  try {
+    const currentUserId =
+      req.userId;
+
+    const chatId =
+      req.params.chatId;
+
+    if (!chatId) {
+      return res.status(400).json({
+        message: 'Chat ID is required',
+      });
+    }
+
+    const messages =
+      await Message.find({
+        conversationId: chatId,
+
+        $or: [
+          {
+            sender:
+              currentUserId,
+          },
+          {
+            receiver:
+              currentUserId,
+          },
+        ],
+      })
+        .populate(
+          'sender',
+          'name'
+        )
+        .populate(
+          'receiver',
+          'name'
+        )
+        .sort({
+          createdAt: 1,
+        })
+        .limit(200);
+
+    // Mark received messages as read
+    await Message.updateMany(
+      {
+        conversationId: chatId,
+
+        receiver:
+          currentUserId,
+
+        status: {
+          $ne: 'read',
+        },
+      },
+      {
+        $set: {
+          status: 'read',
+          readAt: new Date(),
+        },
+      }
+    );
+
+    const result =
+      messages.map(
+        (message) => {
+          const formatted =
+            formatMessage(
+              message
+            );
+
+          if (
+            String(
+              message.receiver?._id ||
+              message.receiver
+            ) ===
+            String(currentUserId)
+          ) {
+            formatted.status =
+              'read';
+          }
+
+          return formatted;
+        }
+      );
+
+    return res.json(result);
+
+  } catch (err) {
+    console.error(
+      'GET MESSAGES ERROR:',
+      err
+    );
+
+    return res.status(500).json({
+      message:
+        err.message ||
+        'Could not load messages',
+    });
+  }
+};
+
+
+// ============================================================
+// SEND MESSAGE
+// POST /api/chat/messages
+// ============================================================
+
+exports.sendMessage = async (req, res) => {
+  try {
+    const senderId =
+      req.userId;
+
+    const {
+      receiverId,
+      text,
+    } = req.body;
+
+    if (!receiverId) {
+      return res.status(400).json({
+        message:
+          'receiverId is required',
+      });
+    }
+
+    if (
+      !text ||
+      typeof text !== 'string'
+    ) {
+      return res.status(400).json({
+        message:
+          'Message text is required',
+      });
+    }
+
+    const cleanText =
+      text.trim();
+
+    if (!cleanText) {
+      return res.status(400).json({
+        message:
+          'Message cannot be empty',
+      });
+    }
+
+    if (
+      cleanText.length > 2000
+    ) {
+      return res.status(400).json({
+        message:
+          'Message cannot exceed 2000 characters',
+      });
+    }
+
+    if (
+      String(senderId) ===
+      String(receiverId)
+    ) {
+      return res.status(400).json({
+        message:
+          'You cannot message yourself',
+      });
+    }
+
+    const receiver =
+      await User.findById(
+        receiverId
+      ).select('_id name');
+
+    if (!receiver) {
+      return res.status(404).json({
+        message:
+          'Receiver not found',
+      });
+    }
+
+    const conversationId =
+      createConversationId(
+        senderId,
+        receiverId
+      );
+
+    // ========================================================
+    // ENCRYPT MESSAGE
+    // ========================================================
+
+    const encrypted =
+      encryptMessage(
+        cleanText
+      );
+
+    const message =
+      await Message.create({
+        conversationId,
+
+        sender:
+          senderId,
+
+        receiver:
+          receiverId,
+
+        encryptedText:
+          encrypted.encryptedText,
+
+        iv:
+          encrypted.iv,
+
+        authTag:
+          encrypted.authTag,
+
+        status:
+          'sent',
+      });
+
+    await message.populate([
+      {
+        path:
+          'sender',
+        select:
+          'name',
+      },
+      {
+        path:
+          'receiver',
+        select:
+          'name',
+      },
+    ]);
+
+    return res.status(201).json(
+      formatMessage(
+        message
+      )
+    );
+
+  } catch (err) {
+    console.error(
+      'SEND MESSAGE ERROR:',
+      err
+    );
+
+    return res.status(500).json({
+      message:
+        err.message ||
+        'Could not send message',
+    });
+  }
+};
+
+
+// ============================================================
+// MARK MESSAGE AS READ
+// PATCH /api/chat/messages/:messageId/read
+// ============================================================
+
+exports.markAsRead = async (
+  req,
+  res
+) => {
+  try {
+    const currentUserId =
+      req.userId;
+
+    const message =
+      await Message.findById(
+        req.params.messageId
+      );
+
+    if (!message) {
+      return res.status(404).json({
+        message:
+          'Message not found',
+      });
+    }
+
+    if (
+      String(message.receiver) !==
+      String(currentUserId)
+    ) {
+      return res.status(403).json({
+        message:
+          'Not allowed',
+      });
+    }
+
+    message.status =
+      'read';
+
+    message.readAt =
+      new Date();
+
+    await message.save();
+
+    return res.json({
+      message:
+        'Message marked as read',
+
+      status:
+        'read',
+
+      readAt:
+        message.readAt,
+    });
+
+  } catch (err) {
+    console.error(
+      'MARK READ ERROR:',
+      err
+    );
+
+    return res.status(500).json({
+      message:
+        err.message ||
+        'Could not mark message as read',
+    });
+  }
+};
+
+
+// ============================================================
+// OLD COMPATIBILITY ROUTE
+// GET /api/chat/messages/:userId
+// ============================================================
+
+exports.getConversation = async (
+  req,
+  res
+) => {
+  try {
+    const currentUserId =
+      req.userId;
+
+    const otherUserId =
+      req.params.userId;
+
+    if (!otherUserId) {
+      return res.status(400).json({
+        message:
+          'User ID is required',
+      });
+    }
+
+    const conversationId =
+      createConversationId(
+        currentUserId,
+        otherUserId
+      );
+
+    const messages =
+      await Message.find({
+        conversationId,
+      })
+        .populate(
+          'sender',
+          'name'
+        )
+        .populate(
+          'receiver',
+          'name'
+        )
+        .sort({
+          createdAt: 1,
+        })
+        .limit(200);
+
+    const result =
+      messages.map(
+        formatMessage
+      );
+
+    return res.json({
+      conversationId,
+
+      messages:
+        result,
+    });
+
+  } catch (err) {
+    console.error(
+      'GET CONVERSATION ERROR:',
+      err
+    );
+
+    return res.status(500).json({
+      message:
+        err.message ||
+        'Could not load conversation',
+    });
+  }
+};
+

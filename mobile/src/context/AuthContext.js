@@ -82,6 +82,12 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateProfile = async (fields) => {
+    const { data } = await client.patch('/auth/profile', fields);
+    setUser(data);
+    return data;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -94,6 +100,7 @@ export function AuthProvider({ children }) {
         forgotPassword,
         resetPassword,
         logout,
+        updateProfile,
       }}
     >
       {children}

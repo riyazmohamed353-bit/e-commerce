@@ -15,6 +15,8 @@ function publicUser(user) {
     name: user.name,
     email: user.email,
     phone: user.phone,
+    pincode: user.pincode,
+    city: user.city,
     emailVerified: user.emailVerified,
     trustScore: user.getTrustScore(),
   };
@@ -219,4 +221,27 @@ exports.me = async (req, res) => {
   const user = await User.findById(req.userId);
   if (!user) return res.status(404).json({ message: 'User not found' });
   res.json(publicUser(user));
+};
+
+// PATCH /api/auth/profile  { name?, phone?, pincode?, city? }
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, phone, pincode, city } = req.body;
+    if (pincode && !/^\d{6}$/.test(pincode)) {
+      return res.status(400).json({ message: 'Pincode must be 6 digits' });
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (name !== undefined) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+    if (pincode !== undefined) user.pincode = pincode;
+    if (city !== undefined) user.city = city;
+    await user.save();
+
+    res.json(publicUser(user));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
