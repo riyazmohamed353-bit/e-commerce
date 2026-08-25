@@ -1,307 +1,432 @@
 const mongoose = require('mongoose');
 const Listing = require('../models/Listing');
-const User = require('../models/User');
+
+
+// ============================================================
+// HELPER: GET USER ID
+// ============================================================
+
+function getUserId(req) {
+  const userId =
+    req.userId ||
+    req.user?._id ||
+    req.user?.id ||
+    req.user?.userId ||
+    null;
+
+  if (!userId) {
+    return null;
+  }
+
+  return String(userId);
+}
+
+
+// ============================================================
+// HELPER: VALIDATE OBJECT ID
+// ============================================================
+
+function isValidObjectId(id) {
+  if (!id) {
+    return false;
+  }
+
+  return mongoose.Types.ObjectId.isValid(String(id));
+}
+
 
 // ============================================================
 // CREATE LISTING
+// POST /api/listings
 // ============================================================
 
-exports.createListing = async (req, res) => {
+const createListing = async (req, res) => {
   try {
-    if (!req.userId) {
+    const userId = getUserId(req);
+
+    console.log('CREATE LISTING USER:', userId);
+
+    if (!userId) {
       return res.status(401).json({
+        success: false,
         message: 'User authentication required',
       });
     }
 
-    const payload = {
-      ...req.body,
-      seller: req.userId,
-    };
-
-    // Get seller location if listing doesn't provide it
-    if (!payload.pincode || !payload.city) {
-      const seller = await User.findById(req.userId).select(
-        'pincode city'
-      );
-
-      if (seller) {
-        payload.pincode =
-          payload.pincode || seller.pincode || '';
-
-        payload.city =
-          payload.city || seller.city || '';
-      }
+    if (!isValidObjectId(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID',
+      });
     }
 
-    const listing = await Listing.create(payload);
+    const {
+      title,
+      category,
+      brand,
+      model,
+      specs,
+      conditionText,
+      photos,
+      sellerPrice,
+      pincode,
+      city,
+      aiEstimate,
+      aiCondition,
+      isSuspicious,
+      suspiciousReason,
+    } = req.body;
 
-    const populatedListing = await Listing.findById(
-      listing._id
-    ).populate('seller', 'name email');
+    if (
+      !title ||
+      !category ||
+      sellerPrice === undefined
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Title, category and seller price are required',
+      });
+    }
 
-    return res.status(201).json(populatedListing);
-  } catch (err) {
-    console.error('CREATE LISTING ERROR:', err);
+    const listing = await Listing.create({
+      seller: userId,
+
+      title,
+
+      category,
+
+      brand: brand || '',
+
+      model: model || '',
+
+      specs: {
+        storage: specs?.storage || '',
+        ram: specs?.ram || '',
+        gpu: specs?.gpu || '',
+        processor: specs?.processor || '',
+        display: specs?.display || '',
+        camera: specs?.camera || '',
+        connectivity: specs?.connectivity || '',
+
+        ageMonths:
+          specs?.ageMonths !== undefined &&
+          specs?.ageMonths !== ''
+            ? Number(specs.ageMonths)
+            : null,
+
+        batteryHealth:
+          specs?.batteryHealth !== undefined &&
+          specs?.batteryHealth !== ''
+            ? Number(specs.batteryHealth)
+            : null,
+      },
+
+      conditionText: conditionText || '',
+
+      photos: Array.isArray(photos)
+        ? photos
+        : [],
+
+      sellerPrice: Number(sellerPrice),
+
+      pincode: pincode || '',
+
+      city: city || '',
+
+      aiEstimate: {
+        low: aiEstimate?.low ?? null,
+
+        high: aiEstimate?.high ?? null,
+
+        recommended:
+          aiEstimate?.recommended ?? null,
+
+        reasoning:
+          aiEstimate?.reasoning || '',
+      },
+
+      aiCondition: {
+        score: aiCondition?.score ?? null,
+
+        issues:
+          Array.isArray(aiCondition?.issues)
+            ? aiCondition.issues
+            : [],
+      },
+
+      isSuspicious:
+        Boolean(isSuspicious),
+
+      suspiciousReason:
+        suspiciousReason || '',
+
+      status: 'active',
+    });
+
+    const populatedListing =
+      await Listing.findById(listing._id)
+        .populate(
+          'seller',
+          'name email phone trustScore'
+        );
+
+    return res.status(201).json({
+      success: true,
+
+      message:
+        'Listing created successfully',
+
+      listing: populatedListing,
+    });
+
+  } catch (error) {
+    console.error(
+      'CREATE LISTING ERROR:',
+      error
+    );
 
     return res.status(500).json({
-      message: err.message || 'Failed to create listing',
+      success: false,
+
+      message:
+        error.message ||
+        'Failed to create listing',
     });
   }
 };
 
+
 // ============================================================
-// GET ALL ACTIVE LISTINGS
+// GET ALL LISTINGS
+// GET /api/listings
 // ============================================================
 
-exports.getListings = async (req, res) => {
+const getListings = async (req, res) => {
   try {
     const {
       category,
+      search,
       minPrice,
       maxPrice,
-      brand,
-      q,
-      minRam,
-      pincode,
-      city,
+      status,
     } = req.query;
 
-    const filter = {
-      status: 'active',
-    };
+    const filter = {};
+
+    filter.status = status || 'active';
 
     if (category) {
-      filter.category = new RegExp(category, 'i');
+      filter.category = category;
     }
 
-    if (brand) {
-      filter.brand = new RegExp(brand, 'i');
-    }
-
-    if (city) {
-      filter.city = new RegExp(city, 'i');
-    }
-
-    if (pincode) {
-      const areaPrefix = String(pincode).slice(0, 3);
-
-      filter.pincode = new RegExp(
-        `^${areaPrefix}`
-      );
-    }
-
-    if (minPrice || maxPrice) {
+    if (
+      minPrice !== undefined ||
+      maxPrice !== undefined
+    ) {
       filter.sellerPrice = {};
 
-      if (minPrice) {
+      if (minPrice !== undefined) {
         filter.sellerPrice.$gte =
           Number(minPrice);
       }
 
-      if (maxPrice) {
+      if (maxPrice !== undefined) {
         filter.sellerPrice.$lte =
           Number(maxPrice);
       }
     }
 
-    if (q) {
+    if (search && search.trim()) {
       filter.$text = {
-        $search: q,
+        $search: search.trim(),
       };
     }
 
-    let listings = await Listing.find(filter)
-      .populate('seller', 'name email')
-      .sort({
-        createdAt: -1,
-      })
-      .limit(100);
+    const listings =
+      await Listing.find(filter)
+        .populate(
+          'seller',
+          'name email trustScore'
+        )
+        .sort({
+          createdAt: -1,
+        });
 
-    // ========================================================
-    // MIN RAM
-    // ========================================================
+    return res.status(200).json({
+      success: true,
 
-    if (minRam) {
-      const minRamNum =
-        parseInt(minRam, 10);
+      count: listings.length,
 
-      if (!Number.isNaN(minRamNum)) {
-        listings = listings.filter(
-          (listing) => {
-            const listingRamNum =
-              parseInt(
-                listing.specs?.ram,
-                10
-              );
+      listings,
+    });
 
-            return (
-              !Number.isNaN(
-                listingRamNum
-              ) &&
-              listingRamNum >=
-                minRamNum
-            );
-          }
-        );
-      }
-    }
-
-    return res.json(listings);
-  } catch (err) {
+  } catch (error) {
     console.error(
       'GET LISTINGS ERROR:',
-      err
+      error
     );
 
     return res.status(500).json({
+      success: false,
+
       message:
-        err.message ||
-        'Failed to get listings',
+        error.message ||
+        'Failed to load listings',
     });
   }
 };
 
+
 // ============================================================
-// GET LISTING BY ID
+// GET SINGLE LISTING
+// GET /api/listings/:id
 // ============================================================
 
-exports.getListingById = async (
-  req,
-  res
-) => {
+const getListingById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (
-      !mongoose.Types.ObjectId.isValid(id)
-    ) {
+    console.log(
+      'GET LISTING BY ID:',
+      id
+    );
+
+    if (!id) {
       return res.status(400).json({
+        success: false,
+        message: 'Listing ID is required',
+      });
+    }
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
         message: 'Invalid listing ID',
       });
     }
 
     const listing =
-      await Listing.findById(id).populate(
-        'seller',
-        'name email'
-      );
+      await Listing.findById(id)
+        .populate(
+          'seller',
+          'name email phone trustScore'
+        );
 
     if (!listing) {
       return res.status(404).json({
+        success: false,
         message: 'Listing not found',
       });
     }
 
-    return res.json(listing);
-  } catch (err) {
-    console.error(
-      'GET LISTING ERROR:',
-      err
-    );
+    return res.status(200).json({
+      success: true,
 
-    return res.status(500).json({
-      message:
-        err.message ||
-        'Failed to get listing',
-    });
-  }
-};
-
-// ============================================================
-// UPDATE LISTING
-// ============================================================
-
-exports.updateListing = async (
-  req,
-  res
-) => {
-  try {
-    if (!req.userId) {
-      return res.status(401).json({
-        message: 'Authentication required',
-      });
-    }
-
-    const { id } = req.params;
-
-    if (
-      !mongoose.Types.ObjectId.isValid(id)
-    ) {
-      return res.status(400).json({
-        message: 'Invalid listing ID',
-      });
-    }
-
-    const listing =
-      await Listing.findById(id);
-
-    if (!listing) {
-      return res.status(404).json({
-        message: 'Listing not found',
-      });
-    }
-
-    // Only owner can edit
-    if (
-      listing.seller.toString() !==
-      req.userId.toString()
-    ) {
-      return res.status(403).json({
-        message: 'Not your listing',
-      });
-    }
-
-    // Don't allow changing seller
-    delete req.body.seller;
-
-    Object.assign(
       listing,
-      req.body
-    );
+    });
 
-    await listing.save();
-
-    const updatedListing =
-      await Listing.findById(
-        listing._id
-      ).populate(
-        'seller',
-        'name email'
-      );
-
-    return res.json(
-      updatedListing
-    );
-  } catch (err) {
+  } catch (error) {
     console.error(
-      'UPDATE LISTING ERROR:',
-      err
+      'GET LISTING BY ID ERROR:',
+      error
     );
 
     return res.status(500).json({
+      success: false,
+
       message:
-        err.message ||
-        'Failed to update listing',
+        error.message ||
+        'Failed to load listing',
     });
   }
 };
 
+
 // ============================================================
-// MARK LISTING AS SOLD
+// GET MY LISTINGS
+// GET /api/listings/my-listings
 // ============================================================
 
-exports.markListingAsSold = async (
-  req,
-  res
-) => {
+const getMyListings = async (req, res) => {
+  try {
+    const userId = getUserId(req);
+
+    console.log(
+      'MY LISTINGS USER ID:',
+      userId
+    );
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message:
+          'User authentication required',
+      });
+    }
+
+    if (!isValidObjectId(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID',
+      });
+    }
+
+    const listings =
+      await Listing.find({
+        seller: userId,
+      })
+        .populate(
+          'seller',
+          'name email trustScore'
+        )
+        .sort({
+          createdAt: -1,
+        });
+
+    return res.status(200).json({
+      success: true,
+
+      count: listings.length,
+
+      listings,
+    });
+
+  } catch (error) {
+    console.error(
+      'MY LISTINGS ERROR:',
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+
+      message:
+        error.message ||
+        'Failed to load my listings',
+    });
+  }
+};
+
+
+// ============================================================
+// DASHBOARD STATS
+// GET /api/listings/dashboard-stats
+// ============================================================
+
+const getDashboardStats = async (req, res) => {
   try {
     console.log(
-      '========================================'
+      '===================================='
     );
 
     console.log(
-      'MARK LISTING AS SOLD'
+      'DASHBOARD STATS REQUEST'
+    );
+
+    console.log(
+      'URL:',
+      req.originalUrl
     );
 
     console.log(
@@ -310,86 +435,336 @@ exports.markListingAsSold = async (
     );
 
     console.log(
-      'LISTING ID:',
-      req.params.id
+      '===================================='
     );
 
-    console.log(
-      'BODY:',
-      req.body
-    );
+    const userId = getUserId(req);
 
-    console.log(
-      '========================================'
-    );
-
-    // --------------------------------------------------------
-    // AUTH CHECK
-    // --------------------------------------------------------
-
-    if (!req.userId) {
+    if (!userId) {
       return res.status(401).json({
+        success: false,
         message:
           'User authentication required',
       });
     }
 
+    if (!isValidObjectId(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID',
+      });
+    }
+
+    const active =
+      await Listing.countDocuments({
+        seller: userId,
+        status: 'active',
+      });
+
+    const sold =
+      await Listing.countDocuments({
+        seller: userId,
+        status: 'sold',
+      });
+
+    const total =
+      await Listing.countDocuments({
+        seller: userId,
+      });
+
+    const recent =
+      await Listing.find({
+        seller: userId,
+      })
+        .sort({
+          createdAt: -1,
+        })
+        .limit(5)
+        .lean();
+
     // --------------------------------------------------------
-    // ID CHECK
+    // Convert MongoDB ObjectIds to strings
     // --------------------------------------------------------
+
+    const formattedRecent =
+      recent.map((listing) => ({
+        ...listing,
+
+        _id: listing._id
+          ? String(listing._id)
+          : null,
+
+        seller: listing.seller
+          ? String(listing.seller)
+          : null,
+      }));
+
+    console.log(
+      'DASHBOARD COUNTS:',
+      {
+        active,
+        sold,
+        total,
+      }
+    );
+
+    console.log(
+      'DASHBOARD RECENT:',
+      formattedRecent.map(
+        (listing) => ({
+          id: listing._id,
+          title: listing.title,
+          status: listing.status,
+        })
+      )
+    );
+
+    return res.status(200).json({
+      success: true,
+
+      active,
+
+      sold,
+
+      total,
+
+      recent: formattedRecent,
+    });
+
+  } catch (error) {
+    console.error(
+      'DASHBOARD STATS ERROR:',
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+
+      message:
+        error.message ||
+        'Failed to load dashboard',
+    });
+  }
+};
+
+
+// ============================================================
+// UPDATE LISTING
+// PUT /api/listings/:id
+// ============================================================
+
+const updateListing = async (req, res) => {
+  try {
+    const userId = getUserId(req);
 
     const { id } = req.params;
 
-    if (
-      !mongoose.Types.ObjectId.isValid(id)
-    ) {
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message:
+          'Authentication required',
+      });
+    }
+
+    if (!isValidObjectId(id)) {
       return res.status(400).json({
+        success: false,
         message:
           'Invalid listing ID',
       });
     }
-
-    // --------------------------------------------------------
-    // FIND LISTING
-    // --------------------------------------------------------
 
     const listing =
       await Listing.findById(id);
 
     if (!listing) {
       return res.status(404).json({
+        success: false,
         message:
           'Listing not found',
       });
     }
 
-    // --------------------------------------------------------
-    // OWNER CHECK
-    // --------------------------------------------------------
-
     if (
-      listing.seller.toString() !==
-      req.userId.toString()
+      String(listing.seller) !==
+      String(userId)
     ) {
       return res.status(403).json({
+        success: false,
+        message:
+          'You are not allowed to update this listing',
+      });
+    }
+
+    if (listing.status === 'sold') {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Sold listings cannot be edited',
+      });
+    }
+
+    const allowedFields = [
+      'title',
+      'category',
+      'brand',
+      'model',
+      'specs',
+      'conditionText',
+      'photos',
+      'sellerPrice',
+      'pincode',
+      'city',
+      'aiEstimate',
+      'aiCondition',
+      'isSuspicious',
+      'suspiciousReason',
+    ];
+
+    allowedFields.forEach(
+      (field) => {
+        if (
+          req.body[field] !== undefined
+        ) {
+          listing[field] =
+            req.body[field];
+        }
+      }
+    );
+
+    await listing.save();
+
+    const updated =
+      await Listing.findById(id)
+        .populate(
+          'seller',
+          'name email trustScore'
+        );
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        'Listing updated successfully',
+
+      listing: updated,
+    });
+
+  } catch (error) {
+    console.error(
+      'UPDATE LISTING ERROR:',
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+
+      message:
+        error.message ||
+        'Failed to update listing',
+    });
+  }
+};
+
+
+// ============================================================
+// MARK AS SOLD
+// PATCH /api/listings/:id/sold
+// ============================================================
+
+const markAsSold = async (req, res) => {
+  try {
+    const userId = getUserId(req);
+
+    const { id } = req.params;
+
+    console.log(
+      '===================================='
+    );
+
+    console.log(
+      'MARK AS SOLD REQUEST'
+    );
+
+    console.log(
+      'LISTING ID:',
+      id
+    );
+
+    console.log(
+      'USER ID:',
+      userId
+    );
+
+    console.log(
+      '===================================='
+    );
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message:
+          'Authentication required',
+      });
+    }
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Listing ID is required',
+      });
+    }
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Invalid listing ID',
+      });
+    }
+
+    if (!isValidObjectId(userId)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Invalid user ID',
+      });
+    }
+
+    const listing =
+      await Listing.findById(id);
+
+    if (!listing) {
+      return res.status(404).json({
+        success: false,
+        message:
+          'Listing not found',
+      });
+    }
+
+    if (
+      String(listing.seller) !==
+      String(userId)
+    ) {
+      return res.status(403).json({
+        success: false,
         message:
           'You can only mark your own listing as sold',
       });
     }
 
-    // --------------------------------------------------------
-    // ALREADY SOLD
-    // --------------------------------------------------------
-
     if (listing.status === 'sold') {
       return res.status(400).json({
+        success: false,
         message:
           'This listing is already marked as sold',
       });
     }
 
     // --------------------------------------------------------
-    // MARK AS SOLD
+    // MARK SOLD
     // --------------------------------------------------------
 
     listing.status = 'sold';
@@ -400,77 +775,80 @@ exports.markListingAsSold = async (
     if (
       req.body &&
       req.body.soldTo &&
-      mongoose.Types.ObjectId.isValid(
+      isValidObjectId(
         req.body.soldTo
       )
     ) {
       listing.soldTo =
         req.body.soldTo;
-    } else {
-      listing.soldTo = null;
     }
 
     await listing.save();
 
-    // --------------------------------------------------------
-    // RETURN UPDATED LISTING
-    // --------------------------------------------------------
-
-    const updatedListing =
-      await Listing.findById(
-        listing._id
-      ).populate(
-        'seller',
-        'name email'
-      );
+    const updated =
+      await Listing.findById(id)
+        .populate(
+          'seller',
+          'name email trustScore'
+        )
+        .populate(
+          'soldTo',
+          'name email'
+        );
 
     console.log(
-      'LISTING MARKED AS SOLD:',
-      updatedListing._id
+      'LISTING SUCCESSFULLY MARKED SOLD:',
+      id
     );
 
-    return res.json({
+    return res.status(200).json({
+      success: true,
+
       message:
         'Listing marked as sold successfully',
-      listing:
-        updatedListing,
+
+      listing: updated,
     });
-  } catch (err) {
+
+  } catch (error) {
     console.error(
       'MARK AS SOLD ERROR:',
-      err
+      error
     );
 
     return res.status(500).json({
+      success: false,
+
       message:
-        err.message ||
+        error.message ||
         'Failed to mark listing as sold',
     });
   }
 };
 
+
 // ============================================================
-// MARK LISTING AS ACTIVE AGAIN
+// DELETE LISTING
+// DELETE /api/listings/:id
 // ============================================================
 
-exports.markListingAsActive = async (
-  req,
-  res
-) => {
+const deleteListing = async (req, res) => {
   try {
-    if (!req.userId) {
-      return res.status(401).json({
-        message:
-          'User authentication required',
-      });
-    }
+    const userId = getUserId(req);
 
     const { id } = req.params;
 
-    if (
-      !mongoose.Types.ObjectId.isValid(id)
-    ) {
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message:
+          'Authentication required',
+      });
+    }
+
+    if (!isValidObjectId(id)) {
       return res.status(400).json({
+        success: false,
         message:
           'Invalid listing ID',
       });
@@ -481,217 +859,62 @@ exports.markListingAsActive = async (
 
     if (!listing) {
       return res.status(404).json({
+        success: false,
         message:
           'Listing not found',
       });
     }
 
     if (
-      listing.seller.toString() !==
-      req.userId.toString()
+      String(listing.seller) !==
+      String(userId)
     ) {
       return res.status(403).json({
+        success: false,
         message:
-          'You can only reactivate your own listing',
+          'You are not allowed to delete this listing',
       });
     }
 
-    listing.status = 'active';
-    listing.soldAt = null;
-    listing.soldTo = null;
+    listing.status = 'removed';
 
     await listing.save();
 
-    const updatedListing =
-      await Listing.findById(
-        listing._id
-      ).populate(
-        'seller',
-        'name email'
-      );
+    return res.status(200).json({
+      success: true,
 
-    return res.json({
       message:
-        'Listing is active again',
-      listing:
-        updatedListing,
+        'Listing removed successfully',
     });
-  } catch (err) {
+
+  } catch (error) {
     console.error(
-      'MARK ACTIVE ERROR:',
-      err
+      'DELETE LISTING ERROR:',
+      error
     );
 
     return res.status(500).json({
+      success: false,
+
       message:
-        err.message ||
-        'Failed to reactivate listing',
+        error.message ||
+        'Failed to delete listing',
     });
   }
 };
 
-// ============================================================
-// GET MY LISTINGS
-// ============================================================
-
-exports.getMyListings = async (
-  req,
-  res
-) => {
-  try {
-    if (!req.userId) {
-      return res.status(401).json({
-        message:
-          'User authentication required',
-      });
-    }
-
-    const listings =
-      await Listing.find({
-        seller: req.userId,
-      }).sort({
-        createdAt: -1,
-      });
-
-    return res.json(listings);
-  } catch (err) {
-    console.error(
-      'GET MY LISTINGS ERROR:',
-      err
-    );
-
-    return res.status(500).json({
-      message:
-        err.message ||
-        'Failed to get your listings',
-    });
-  }
-};
 
 // ============================================================
-// DASHBOARD STATS
+// EXPORTS
 // ============================================================
 
-exports.getDashboardStats = async (
-  req,
-  res
-) => {
-  try {
-    if (!req.userId) {
-      return res.status(401).json({
-        message:
-          'User authentication required',
-      });
-    }
-
-    const [
-      active,
-      sold,
-      total,
-    ] = await Promise.all([
-      Listing.countDocuments({
-        seller: req.userId,
-        status: 'active',
-      }),
-
-      Listing.countDocuments({
-        seller: req.userId,
-        status: 'sold',
-      }),
-
-      Listing.countDocuments({
-        seller: req.userId,
-      }),
-    ]);
-
-    const recent =
-      await Listing.find({
-        seller: req.userId,
-      })
-        .sort({
-          createdAt: -1,
-        })
-        .limit(5);
-
-    return res.json({
-      active,
-      sold,
-      total,
-      recent,
-    });
-  } catch (err) {
-    console.error(
-      'DASHBOARD STATS ERROR:',
-      err
-    );
-
-    return res.status(500).json({
-      message:
-        err.message ||
-        'Failed to get dashboard stats',
-    });
-  }
-};
-
-// ============================================================
-// COMPARE LISTINGS
-// ============================================================
-
-exports.compareListings = async (
-  req,
-  res
-) => {
-  try {
-    const ids = (
-      req.query.ids || ''
-    )
-      .split(',')
-      .filter(Boolean);
-
-    if (ids.length < 2) {
-      return res.status(400).json({
-        message:
-          'Provide at least 2 listing IDs',
-      });
-    }
-
-    const validIds = ids.filter(
-      (id) =>
-        mongoose.Types.ObjectId.isValid(
-          id
-        )
-    );
-
-    if (
-      validIds.length !== ids.length
-    ) {
-      return res.status(400).json({
-        message:
-          'One or more listing IDs are invalid',
-      });
-    }
-
-    const listings =
-      await Listing.find({
-        _id: {
-          $in: validIds,
-        },
-      }).populate(
-        'seller',
-        'name'
-      );
-
-    return res.json(listings);
-  } catch (err) {
-    console.error(
-      'COMPARE LISTINGS ERROR:',
-      err
-    );
-
-    return res.status(500).json({
-      message:
-        err.message ||
-        'Failed to compare listings',
-    });
-  }
+module.exports = {
+  createListing,
+  getListings,
+  getListingById,
+  updateListing,
+  deleteListing,
+  markAsSold,
+  getMyListings,
+  getDashboardStats,
 };
