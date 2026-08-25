@@ -356,13 +356,19 @@ listingSchema.index({
 // ============================================================
 // CATEGORY NORMALIZATION
 //
-// Makes sure category is stored consistently.
+// Makes sure category is stored consistently. Includes legacy
+// aliases ('phone', 'smartphone') for listings created before
+// the current category list was finalized, so old documents
+// don't fail validation the next time they're saved (e.g. via
+// Mark as Sold, which re-validates the whole document).
 // ============================================================
 
 listingSchema.pre('validate', function (next) {
   if (this.category) {
     const categoryMap = {
       mobile: 'Mobile',
+      phone: 'Mobile',
+      smartphone: 'Mobile',
       laptop: 'Laptop',
       tablet: 'Tablet',
       smartwatch: 'Smartwatch',
