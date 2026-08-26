@@ -9,6 +9,7 @@ const {
   updateListing,
   deleteListing,
   markAsSold,
+  unmarkAsSold,
   getMyListings,
   getDashboardStats,
 } = require('../controllers/listingController');
@@ -63,6 +64,16 @@ router.patch(
   '/:id/sold',
   requireAuth,
   markAsSold
+);
+
+// ============================================================
+// UNMARK AS SOLD
+// ============================================================
+
+router.patch(
+  '/:id/unsold',
+  requireAuth,
+  unmarkAsSold
 );
 
 // ============================================================

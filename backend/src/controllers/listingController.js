@@ -416,28 +416,6 @@ const getMyListings = async (req, res) => {
 
 const getDashboardStats = async (req, res) => {
   try {
-    console.log(
-      '===================================='
-    );
-
-    console.log(
-      'DASHBOARD STATS REQUEST'
-    );
-
-    console.log(
-      'URL:',
-      req.originalUrl
-    );
-
-    console.log(
-      'USER ID:',
-      req.userId
-    );
-
-    console.log(
-      '===================================='
-    );
-
     const userId = getUserId(req);
 
     if (!userId) {
@@ -482,10 +460,6 @@ const getDashboardStats = async (req, res) => {
         .limit(5)
         .lean();
 
-    // --------------------------------------------------------
-    // Convert MongoDB ObjectIds to strings
-    // --------------------------------------------------------
-
     const formattedRecent =
       recent.map((listing) => ({
         ...listing,
@@ -498,26 +472,6 @@ const getDashboardStats = async (req, res) => {
           ? String(listing.seller)
           : null,
       }));
-
-    console.log(
-      'DASHBOARD COUNTS:',
-      {
-        active,
-        sold,
-        total,
-      }
-    );
-
-    console.log(
-      'DASHBOARD RECENT:',
-      formattedRecent.map(
-        (listing) => ({
-          id: listing._id,
-          title: listing.title,
-          status: listing.status,
-        })
-      )
-    );
 
     return res.status(200).json({
       success: true,
@@ -679,28 +633,6 @@ const markAsSold = async (req, res) => {
 
     const { id } = req.params;
 
-    console.log(
-      '===================================='
-    );
-
-    console.log(
-      'MARK AS SOLD REQUEST'
-    );
-
-    console.log(
-      'LISTING ID:',
-      id
-    );
-
-    console.log(
-      'USER ID:',
-      userId
-    );
-
-    console.log(
-      '===================================='
-    );
-
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -763,15 +695,10 @@ const markAsSold = async (req, res) => {
       });
     }
 
-    // --------------------------------------------------------
-    // MARK SOLD
-    // --------------------------------------------------------
-
     listing.status = 'sold';
 
     listing.soldAt = new Date();
 
-    // Optional buyer
     if (
       req.body &&
       req.body.soldTo &&
@@ -796,11 +723,6 @@ const markAsSold = async (req, res) => {
           'name email'
         );
 
-    console.log(
-      'LISTING SUCCESSFULLY MARKED SOLD:',
-      id
-    );
-
     return res.status(200).json({
       success: true,
 
@@ -822,6 +744,108 @@ const markAsSold = async (req, res) => {
       message:
         error.message ||
         'Failed to mark listing as sold',
+    });
+  }
+};
+
+
+// ============================================================
+// UNMARK AS SOLD
+// PATCH /api/listings/:id/unsold
+//
+// Reverts a 'sold' listing back to 'active'. Bypasses
+// updateListing's "sold listings can't be edited" restriction,
+// since that block exists to stop *editing details* of a sold
+// item, not to prevent the seller from reopening the listing.
+// ============================================================
+
+const unmarkAsSold = async (req, res) => {
+  try {
+    const userId = getUserId(req);
+
+    const { id } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message:
+          'Authentication required',
+      });
+    }
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Invalid listing ID',
+      });
+    }
+
+    const listing =
+      await Listing.findById(id);
+
+    if (!listing) {
+      return res.status(404).json({
+        success: false,
+        message:
+          'Listing not found',
+      });
+    }
+
+    if (
+      String(listing.seller) !==
+      String(userId)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          'You can only update your own listing',
+      });
+    }
+
+    if (listing.status !== 'sold') {
+      return res.status(400).json({
+        success: false,
+        message:
+          'This listing is not marked as sold',
+      });
+    }
+
+    listing.status = 'active';
+
+    // The pre('save') hook on the model already clears
+    // soldAt/soldTo whenever status moves away from 'sold'.
+
+    await listing.save();
+
+    const updated =
+      await Listing.findById(id)
+        .populate(
+          'seller',
+          'name email trustScore'
+        );
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        'Listing marked as active again',
+
+      listing: updated,
+    });
+
+  } catch (error) {
+    console.error(
+      'UNMARK AS SOLD ERROR:',
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+
+      message:
+        error.message ||
+        'Failed to unmark listing as sold',
     });
   }
 };
@@ -915,6 +939,7 @@ module.exports = {
   updateListing,
   deleteListing,
   markAsSold,
+  unmarkAsSold,
   getMyListings,
   getDashboardStats,
 };
