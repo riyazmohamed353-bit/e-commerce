@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Listing = require('../models/Listing');
+const User = require('../models/User');
 
 
 // ============================================================
@@ -712,6 +713,15 @@ const markAsSold = async (req, res) => {
 
     await listing.save();
 
+    // A sale just completed - count it toward this seller's trust
+    // score. unmarkAsSold below does the exact opposite (-1) if
+    // this gets reverted, so mark/unmark can't be used to farm an
+    // unlimited score by toggling back and forth.
+    await User.findByIdAndUpdate(
+      userId,
+      { $inc: { successfulSales: 1 } }
+    );
+
     const updated =
       await Listing.findById(id)
         .populate(
@@ -817,6 +827,17 @@ const unmarkAsSold = async (req, res) => {
     // soldAt/soldTo whenever status moves away from 'sold'.
 
     await listing.save();
+
+    // Reverse the +1 from markAsSold. Guarded with successfulSales:
+    // { $gt: 0 } so this can never push the count negative even if
+    // something upstream is ever inconsistent.
+    await User.updateOne(
+      {
+        _id: userId,
+        successfulSales: { $gt: 0 },
+      },
+      { $inc: { successfulSales: -1 } }
+    );
 
     const updated =
       await Listing.findById(id)
