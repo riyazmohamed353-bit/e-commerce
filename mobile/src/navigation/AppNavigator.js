@@ -306,7 +306,7 @@ function MainNavigator() {
         name="Chat"
         component={ChatScreen}
         options={{
-          title: 'Chat',
+          headerShown: false,
         }}
       />
 

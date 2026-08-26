@@ -16,6 +16,7 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Keyboard,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
@@ -37,6 +38,7 @@ export default function ChatScreen({
     sellerId,
     sellerName,
     userName,
+    listingId,
   } = route.params || {};
 
   const otherUserId =
@@ -63,27 +65,17 @@ export default function ChatScreen({
   // STATE
   // ============================================================
 
-  const [messages, setMessages] =
-    useState([]);
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [text, setText] =
-    useState('');
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [sending, setSending] =
-    useState(false);
-
-  const [refreshing, setRefreshing] =
-    useState(false);
-
-  const flatListRef =
-    useRef(null);
+  const flatListRef = useRef(null);
+  const inputRef = useRef(null);
 
   // ============================================================
-  // LOAD CONVERSATION
-  // GET /api/chat/messages/:userId
+  // LOAD MESSAGES
   // ============================================================
 
   const loadMessages = useCallback(
@@ -94,14 +86,8 @@ export default function ChatScreen({
       }
 
       try {
-        const response =
-          await client.get(
-            `/chat/messages/${otherUserId}`
-          );
-
-        console.log(
-          'CONVERSATION RESPONSE:',
-          response.data
+        const response = await client.get(
+          `/chat/messages/${otherUserId}`
         );
 
         const data =
@@ -112,7 +98,6 @@ export default function ChatScreen({
             ? data
             : []
         );
-
       } catch (error) {
         console.log(
           'LOAD CHAT ERROR:',
@@ -165,175 +150,280 @@ export default function ChatScreen({
   // REFRESH
   // ============================================================
 
-  const refreshMessages =
-    async () => {
-      if (!otherUserId) {
-        return;
-      }
+  const refreshMessages = async () => {
+    if (!otherUserId) {
+      return;
+    }
 
-      try {
-        setRefreshing(true);
-
-        await loadMessages();
-
-      } finally {
-        setRefreshing(false);
-      }
-    };
+    try {
+      setRefreshing(true);
+      await loadMessages();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // ============================================================
   // SEND MESSAGE
-  // POST /api/chat/messages
   // ============================================================
 
-  const sendMessage =
-    async () => {
-      const cleanText =
-        text.trim();
+  const sendMessage = async () => {
+    const cleanText = text.trim();
 
-      if (!cleanText) {
-        return;
-      }
+    if (!cleanText) {
+      return;
+    }
 
-      if (!otherUserId) {
-        Alert.alert(
-          'Chat Error',
-          'Receiver ID is missing.'
-        );
-        return;
-      }
+    if (!otherUserId) {
+      Alert.alert(
+        'Chat Error',
+        'Receiver ID is missing.'
+      );
+      return;
+    }
 
-      if (!currentUserId) {
-        Alert.alert(
-          'Chat Error',
-          'You are not logged in.'
-        );
-        return;
-      }
+    if (!currentUserId) {
+      Alert.alert(
+        'Chat Error',
+        'You are not logged in.'
+      );
+      return;
+    }
 
-      try {
-        setSending(true);
+    try {
+      setSending(true);
 
-        console.log(
-          'SENDING MESSAGE:',
+      const response =
+        await client.post(
+          '/chat/messages',
           {
-            receiverId:
-              otherUserId,
-            text:
-              cleanText,
+            receiverId: otherUserId,
+            text: cleanText,
+
+            // Lets the backend attach this conversation to a
+            // specific listing, so the Messages list can show
+            // its photo/title instead of a blank placeholder.
+            listingId:
+              listingId || undefined,
           }
         );
 
-        const response =
-          await client.post(
-            '/chat/messages',
-            {
-              receiverId:
-                otherUserId,
+      const newMessage =
+        response.data;
 
-              text:
-                cleanText,
-            }
-          );
+      setMessages(previous => [
+        ...previous,
+        newMessage,
+      ]);
 
-        console.log(
-          'MESSAGE RESPONSE:',
-          response.data
-        );
+      setText('');
 
-        const newMessage =
-          response.data;
+      Keyboard.dismiss();
 
-        setMessages(
-          previous => [
-            ...previous,
-            newMessage,
-          ]
-        );
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({
+          animated: true,
+        });
+      }, 150);
 
-        setText('');
+    } catch (error) {
+      console.log(
+        'SEND MESSAGE ERROR:',
+        error.response?.data ||
+          error.message
+      );
 
-        setTimeout(() => {
-          flatListRef.current?.scrollToEnd({
-            animated: true,
-          });
-        }, 100);
-
-      } catch (error) {
-        console.log(
-          'SEND MESSAGE ERROR:',
-          error.response?.data ||
-            error.message
-        );
-
-        Alert.alert(
-          'Message Failed',
-          error.response?.data?.message ||
-            error.message ||
-            'Could not send message.'
-        );
-      } finally {
-        setSending(false);
-      }
-    };
+      Alert.alert(
+        'Message Failed',
+        error.response?.data?.message ||
+          error.message ||
+          'Could not send message.'
+      );
+    } finally {
+      setSending(false);
+    }
+  };
 
   // ============================================================
   // CHECK MY MESSAGE
   // ============================================================
 
-  const isMyMessage =
-    message => {
-      const senderId =
-        message.sender?._id ||
-        message.sender?.id ||
-        message.sender;
+  const isMyMessage = message => {
+    const senderId =
+      message.sender?._id ||
+      message.sender?.id ||
+      message.sender;
 
-      return (
-        String(senderId) ===
-        String(currentUserId)
-      );
-    };
+    return (
+      String(senderId) ===
+      String(currentUserId)
+    );
+  };
 
   // ============================================================
   // TIME
   // ============================================================
 
-  const formatTime =
-    date => {
-      if (!date) {
-        return '';
+  const formatTime = date => {
+    if (!date) {
+      return '';
+    }
+
+    const parsed = new Date(date);
+
+    if (
+      Number.isNaN(
+        parsed.getTime()
+      )
+    ) {
+      return '';
+    }
+
+    return parsed.toLocaleTimeString(
+      'en-US',
+      {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
       }
+    );
+  };
 
-      const parsed =
-        new Date(date);
+  // ============================================================
+  // SAME DAY
+  // ============================================================
 
-      if (
-        Number.isNaN(
-          parsed.getTime()
-        )
-      ) {
-        return '';
+  const isSameDay = (
+    date1,
+    date2
+  ) => {
+    const first = new Date(date1);
+    const second = new Date(date2);
+
+    return (
+      first.getFullYear() ===
+        second.getFullYear() &&
+      first.getMonth() ===
+        second.getMonth() &&
+      first.getDate() ===
+        second.getDate()
+    );
+  };
+
+  // ============================================================
+  // DATE LABEL
+  // ============================================================
+
+  const formatDateLabel = date => {
+    if (!date) {
+      return '';
+    }
+
+    const messageDate =
+      new Date(date);
+
+    if (
+      Number.isNaN(
+        messageDate.getTime()
+      )
+    ) {
+      return '';
+    }
+
+    const today = new Date();
+
+    const yesterday = new Date();
+    yesterday.setDate(
+      yesterday.getDate() - 1
+    );
+
+    if (
+      isSameDay(
+        messageDate,
+        today
+      )
+    ) {
+      return 'Today';
+    }
+
+    if (
+      isSameDay(
+        messageDate,
+        yesterday
+      )
+    ) {
+      return 'Yesterday';
+    }
+
+    return messageDate.toLocaleDateString(
+      'en-US',
+      {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
       }
-
-      return parsed.toLocaleTimeString(
-        [],
-        {
-          hour: '2-digit',
-          minute: '2-digit',
-        }
-      );
-    };
+    );
+  };
 
   // ============================================================
   // MESSAGE ITEM
   // ============================================================
 
-  const renderMessage =
-    ({ item }) => {
-      const mine =
-        isMyMessage(item);
+  const renderMessage = ({
+    item,
+    index,
+  }) => {
+    const mine =
+      isMyMessage(item);
 
-      return (
+    const previousMessage =
+      index > 0
+        ? messages[index - 1]
+        : null;
+
+    const showDateSeparator =
+      !previousMessage ||
+      !isSameDay(
+        previousMessage.createdAt,
+        item.createdAt
+      );
+
+    return (
+      <View>
+        {/* DATE SEPARATOR */}
+
+        {showDateSeparator && (
+          <View
+            style={
+              styles.dateSeparator
+            }
+          >
+            <View
+              style={
+                styles.dateLine
+              }
+            />
+
+            <Text
+              style={
+                styles.dateText
+              }
+            >
+              {formatDateLabel(
+                item.createdAt
+              )}
+            </Text>
+
+            <View
+              style={
+                styles.dateLine
+              }
+            />
+          </View>
+        )}
+
+        {/* MESSAGE */}
+
         <View
           style={[
             styles.messageRow,
@@ -361,6 +451,8 @@ export default function ChatScreen({
               {item.text ||
                 '[Message unavailable]'}
             </Text>
+
+            {/* TIME + READ */}
 
             <View
               style={
@@ -400,8 +492,9 @@ export default function ChatScreen({
             </View>
           </View>
         </View>
-      );
-    };
+      </View>
+    );
+  };
 
   // ============================================================
   // LOADING
@@ -440,13 +533,9 @@ export default function ChatScreen({
       behavior={
         Platform.OS === 'ios'
           ? 'padding'
-          : undefined
+          : 'height'
       }
-      keyboardVerticalOffset={
-        Platform.OS === 'ios'
-          ? 90
-          : 0
-      }
+      keyboardVerticalOffset={0}
     >
       {/* HEADER */}
 
@@ -512,14 +601,17 @@ export default function ChatScreen({
 
       <FlatList
         ref={flatListRef}
+        style={styles.messageList}
         data={messages}
-        keyExtractor={
-          (item, index) =>
-            String(
-              item._id ||
-                item.id ||
-                index
-            )
+        keyExtractor={(
+          item,
+          index
+        ) =>
+          String(
+            item._id ||
+              item.id ||
+              index
+          )
         }
         renderItem={
           renderMessage
@@ -532,13 +624,12 @@ export default function ChatScreen({
         showsVerticalScrollIndicator={
           false
         }
-        refreshing={
-          refreshing
-        }
+        refreshing={refreshing}
         onRefresh={
           refreshMessages
         }
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
         ListEmptyComponent={
           <View
             style={
@@ -585,6 +676,7 @@ export default function ChatScreen({
         }
       >
         <TextInput
+          ref={inputRef}
           value={text}
           onChangeText={
             setText
@@ -595,6 +687,8 @@ export default function ChatScreen({
           maxLength={2000}
           style={styles.input}
           editable={!sending}
+          returnKeyType="default"
+          blurOnSubmit={false}
         />
 
         <TouchableOpacity
@@ -635,247 +729,270 @@ export default function ChatScreen({
 // STYLES
 // ============================================================
 
-const styles =
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor:
-        '#f8fafc',
-    },
+const styles = StyleSheet.create({
 
-    loadingContainer: {
-      flex: 1,
-      justifyContent:
-        'center',
-      alignItems:
-        'center',
-      backgroundColor:
-        '#f8fafc',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
 
-    loadingText: {
-      marginTop: 12,
-      color: '#64748b',
-      fontSize: 15,
-    },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+  },
 
-    header: {
-      height: 72,
-      backgroundColor:
-        '#fff',
-      flexDirection: 'row',
-      alignItems:
-        'center',
-      paddingHorizontal: 12,
-      borderBottomWidth: 1,
-      borderBottomColor:
-        '#e2e8f0',
-    },
+  loadingText: {
+    marginTop: 12,
+    color: '#64748b',
+    fontSize: 15,
+  },
 
-    backButton: {
-      width: 42,
-      height: 42,
-      alignItems:
-        'center',
-      justifyContent:
-        'center',
-    },
+  // ============================================================
+  // HEADER
+  // ============================================================
 
-    headerAvatar: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
-      backgroundColor:
-        '#dbeafe',
-      alignItems:
-        'center',
-      justifyContent:
-        'center',
-      marginLeft: 3,
-    },
+  header: {
+    height: 72,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
 
-    headerAvatarText: {
-      fontSize: 17,
-      fontWeight: '800',
-      color: '#2563eb',
-    },
+  backButton: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-    headerInfo: {
-      flex: 1,
-      marginLeft: 11,
-    },
+  headerAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#dbeafe',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 3,
+  },
 
-    headerName: {
-      fontSize: 16,
-      fontWeight: '800',
-      color: '#111827',
-    },
+  headerAvatarText: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#2563eb',
+  },
 
-    headerSubtitle: {
-      marginTop: 2,
-      fontSize: 12,
-      color: '#64748b',
-    },
+  headerInfo: {
+    flex: 1,
+    marginLeft: 11,
+  },
 
-    messagesContent: {
-      paddingHorizontal: 14,
-      paddingVertical: 16,
-      paddingBottom: 20,
-    },
+  headerName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+  },
 
-    messageRow: {
-      width: '100%',
-      marginBottom: 9,
-      flexDirection: 'row',
-    },
+  headerSubtitle: {
+    marginTop: 2,
+    fontSize: 12,
+    color: '#64748b',
+  },
 
-    myMessageRow: {
-      justifyContent:
-        'flex-end',
-    },
+  // ============================================================
+  // MESSAGE LIST
+  // ============================================================
 
-    theirMessageRow: {
-      justifyContent:
-        'flex-start',
-    },
+  messageList: {
+    flex: 1,
+  },
 
-    messageBubble: {
-      maxWidth: '80%',
-      paddingHorizontal: 13,
-      paddingVertical: 9,
-      borderRadius: 16,
-    },
+  messagesContent: {
+    paddingHorizontal: 14,
+    paddingTop: 16,
+    paddingBottom: 20,
+  },
 
-    myBubble: {
-      backgroundColor:
-        '#2563eb',
-      borderBottomRightRadius: 4,
-    },
+  // ============================================================
+  // DATE
+  // ============================================================
 
-    theirBubble: {
-      backgroundColor:
-        '#fff',
-      borderBottomLeftRadius: 4,
-      borderWidth: 1,
-      borderColor:
-        '#e2e8f0',
-    },
+  dateSeparator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 14,
+    paddingHorizontal: 20,
+  },
 
-    messageText: {
-      fontSize: 15,
-      lineHeight: 21,
-    },
+  dateLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e2e8f0',
+  },
 
-    myMessageText: {
-      color: '#fff',
-    },
+  dateText: {
+    marginHorizontal: 12,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748b',
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
 
-    theirMessageText: {
-      color: '#1e293b',
-    },
+  // ============================================================
+  // MESSAGES
+  // ============================================================
 
-    messageMeta: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent:
-        'flex-end',
-      marginTop: 4,
-    },
+  messageRow: {
+    width: '100%',
+    marginBottom: 9,
+    flexDirection: 'row',
+  },
 
-    messageTime: {
-      fontSize: 10,
-    },
+  myMessageRow: {
+    justifyContent: 'flex-end',
+  },
 
-    myTime: {
-      color: '#dbeafe',
-    },
+  theirMessageRow: {
+    justifyContent: 'flex-start',
+  },
 
-    theirTime: {
-      color: '#94a3b8',
-    },
+  messageBubble: {
+    maxWidth: '80%',
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    borderRadius: 16,
+  },
 
-    emptyContent: {
-      flexGrow: 1,
-      justifyContent:
-        'center',
-      alignItems:
-        'center',
-      padding: 30,
-    },
+  myBubble: {
+    backgroundColor: '#2563eb',
+    borderBottomRightRadius: 4,
+  },
 
-    emptyContainer: {
-      alignItems:
-        'center',
-      maxWidth: 300,
-    },
+  theirBubble: {
+    backgroundColor: '#fff',
+    borderBottomLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
 
-    emptyIcon: {
-      width: 70,
-      height: 70,
-      borderRadius: 35,
-      backgroundColor:
-        '#eff6ff',
-      justifyContent:
-        'center',
-      alignItems:
-        'center',
-    },
+  messageText: {
+    fontSize: 15,
+    lineHeight: 21,
+  },
 
-    emptyTitle: {
-      marginTop: 16,
-      fontSize: 18,
-      fontWeight: '800',
-      color: '#111827',
-    },
+  myMessageText: {
+    color: '#fff',
+  },
 
-    emptyText: {
-      marginTop: 7,
-      textAlign: 'center',
-      color: '#64748b',
-      lineHeight: 20,
-    },
+  theirMessageText: {
+    color: '#1e293b',
+  },
 
-    inputContainer: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
-      backgroundColor:
-        '#fff',
-      borderTopWidth: 1,
-      borderTopColor:
-        '#e2e8f0',
-      paddingHorizontal: 10,
-      paddingVertical: 9,
-    },
+  messageMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 4,
+  },
 
-    input: {
-      flex: 1,
-      minHeight: 44,
-      maxHeight: 110,
-      backgroundColor:
-        '#f1f5f9',
-      borderRadius: 22,
-      paddingHorizontal: 16,
-      paddingTop: 11,
-      paddingBottom: 11,
-      color: '#111827',
-      fontSize: 15,
-      marginRight: 8,
-    },
+  messageTime: {
+    fontSize: 10,
+  },
 
-    sendButton: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor:
-        '#2563eb',
-      justifyContent:
-        'center',
-      alignItems:
-        'center',
-    },
+  myTime: {
+    color: '#dbeafe',
+  },
 
-    sendButtonDisabled: {
-      backgroundColor:
-        '#94a3b8',
-    },
-  });
+  theirTime: {
+    color: '#94a3b8',
+  },
+
+  // ============================================================
+  // EMPTY
+  // ============================================================
+
+  emptyContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+  },
+
+  emptyContainer: {
+    alignItems: 'center',
+    maxWidth: 300,
+  },
+
+  emptyIcon: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#eff6ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  emptyTitle: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111827',
+  },
+
+  emptyText: {
+    marginTop: 7,
+    textAlign: 'center',
+    color: '#64748b',
+    lineHeight: 20,
+  },
+
+  // ============================================================
+  // INPUT
+  // ============================================================
+
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    paddingHorizontal: 10,
+    paddingTop: 9,
+    paddingBottom: 9,
+  },
+
+  input: {
+    flex: 1,
+    minHeight: 44,
+    maxHeight: 110,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingTop: 11,
+    paddingBottom: 11,
+    color: '#111827',
+    fontSize: 15,
+    marginRight: 8,
+  },
+
+  sendButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#2563eb',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  sendButtonDisabled: {
+    backgroundColor: '#94a3b8',
+  },
+});

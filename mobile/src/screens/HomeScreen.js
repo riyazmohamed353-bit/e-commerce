@@ -32,16 +32,22 @@ import {
 
 // ============================================================
 // FILTER OPTIONS
+//
+// FIX: keys must match the Listing model's category enum exactly
+// ('Mobile', 'Laptop', etc.) since the backend does a plain
+// equality match (filter.category = category) with no case
+// normalization. Lowercase keys like 'phone' never matched
+// anything, so category filtering silently returned zero results.
 // ============================================================
 
 const CATEGORIES = [
   { key: '', label: 'All' },
-  { key: 'phone', label: 'Phones' },
-  { key: 'laptop', label: 'Laptops' },
-  { key: 'tablet', label: 'Tablets' },
-  { key: 'smartwatch', label: 'Smartwatches' },
-  { key: 'camera', label: 'Cameras' },
-  { key: 'other', label: 'Other' },
+  { key: 'Mobile', label: 'Phones' },
+  { key: 'Laptop', label: 'Laptops' },
+  { key: 'Tablet', label: 'Tablets' },
+  { key: 'Smartwatch', label: 'Smartwatches' },
+  { key: 'Camera', label: 'Cameras' },
+  { key: 'Other', label: 'Other' },
 ];
 
 const RAM_OPTIONS = [
@@ -210,7 +216,14 @@ export default function HomeScreen({ navigation }) {
           params,
         });
 
-        setListings(Array.isArray(data) ? data : []);
+        // FIX: listingController responds with
+        // { success, count, listings } instead of a bare array.
+        // Array.isArray(data) was always false, so this silently
+        // emptied the Marketplace on every load regardless of
+        // what was actually in the database.
+        setListings(
+          Array.isArray(data?.listings) ? data.listings : []
+        );
       } catch (err) {
         console.warn(
           'Failed to load listings:',
@@ -1066,10 +1079,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
 
-  // ----------------------------------------------------------
-  // HEADER
-  // ----------------------------------------------------------
-
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1093,10 +1102,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  // ----------------------------------------------------------
-  // SEARCH
-  // ----------------------------------------------------------
 
   searchContainer: {
     flexDirection: 'row',
@@ -1127,10 +1132,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  // ----------------------------------------------------------
-  // FILTER ROW
-  // ----------------------------------------------------------
 
   filterRow: {
     flexDirection: 'row',
@@ -1185,16 +1186,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // ----------------------------------------------------------
-  // ACTIVE FILTERS
-  // ----------------------------------------------------------
-
-  // The ScrollView itself needs a bounded height - without one, a
-  // horizontal ScrollView's default cross-axis (height) sizing combined
-  // with its content container's default alignItems:'stretch' lets the
-  // chip Views inside stretch to fill all remaining vertical space,
-  // which is what was making the "phone" / "📍 627005" pills balloon to
-  // ~300px tall instead of hugging their text.
   activeFiltersScroll: {
     maxHeight: 40,
     marginBottom: spacing.xs,
@@ -1220,10 +1211,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-
-  // ----------------------------------------------------------
-  // RESULTS
-  // ----------------------------------------------------------
 
   resultHeader: {
     flexDirection: 'row',
@@ -1252,10 +1239,6 @@ const styles = StyleSheet.create({
   emptyList: {
     flexGrow: 1,
   },
-
-  // ----------------------------------------------------------
-  // EMPTY STATE
-  // ----------------------------------------------------------
 
   emptyContainer: {
     flex: 1,
@@ -1302,10 +1285,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // ----------------------------------------------------------
-  // MODAL
-  // ----------------------------------------------------------
-
   modalContainer: {
     flex: 1,
     backgroundColor: colors.background,
@@ -1346,10 +1325,6 @@ const styles = StyleSheet.create({
   modalContent: {
     padding: spacing.lg,
   },
-
-  // ----------------------------------------------------------
-  // FILTER SECTIONS
-  // ----------------------------------------------------------
 
   sectionTitleRow: {
     flexDirection: 'row',
@@ -1399,10 +1374,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // ----------------------------------------------------------
-  // PRICE
-  // ----------------------------------------------------------
-
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1446,10 +1417,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
 
-  // ----------------------------------------------------------
-  // TEXT INPUT
-  // ----------------------------------------------------------
-
   fullInput: {
     height: 50,
     backgroundColor: colors.surface,
@@ -1467,10 +1434,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
     lineHeight: 18,
   },
-
-  // ----------------------------------------------------------
-  // APPLY
-  // ----------------------------------------------------------
 
   applyContainer: {
     paddingHorizontal: spacing.lg,
