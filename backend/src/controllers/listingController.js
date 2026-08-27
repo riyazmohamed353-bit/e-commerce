@@ -211,6 +211,7 @@ const getListings = async (req, res) => {
       minPrice,
       maxPrice,
       status,
+      seller,
     } = req.query;
 
     const filter = {};
@@ -219,6 +220,10 @@ const getListings = async (req, res) => {
 
     if (category) {
       filter.category = category;
+    }
+
+    if (seller && isValidObjectId(seller)) {
+      filter.seller = seller;
     }
 
     if (

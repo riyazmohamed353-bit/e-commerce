@@ -13,6 +13,7 @@ const {
   resetPassword,
   me,
   updateProfile,
+  getPublicProfile,
 } = require('../controllers/authController');
 
 // Authentication
@@ -26,5 +27,8 @@ router.post('/reset-password', resetPassword);
 // Logged-in user
 router.get('/me', auth, me);
 router.patch('/profile', auth, updateProfile);
+
+// View another user's public profile (e.g. from a chat conversation)
+router.get('/users/:id', auth, getPublicProfile);
 
 module.exports = router;

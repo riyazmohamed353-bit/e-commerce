@@ -245,3 +245,32 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// GET /api/auth/users/:id
+// Public-safe profile info for viewing OTHER users (e.g. from a chat
+// conversation). Deliberately excludes email, phone, and anything else
+// from publicUser() that's only appropriate for the logged-in user
+// themselves.
+exports.getPublicProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      id: user._id,
+      name: user.name,
+      trustScore: user.getTrustScore(),
+      memberSince: user.createdAt,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
+      successfulSales: user.successfulSales,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
