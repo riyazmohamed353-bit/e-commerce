@@ -381,6 +381,10 @@ const getMyListings = async (req, res) => {
     const listings =
       await Listing.find({
         seller: userId,
+        // Deleted listings are soft-deleted (status: 'removed') so
+        // chat/message references to them still resolve, but they
+        // shouldn't reappear in My Listings after a refresh.
+        status: { $ne: 'removed' },
       })
         .populate(
           'seller',
