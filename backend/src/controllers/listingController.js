@@ -72,6 +72,7 @@ const createListing = async (req, res) => {
       sellerPrice,
       pincode,
       city,
+      state,
       aiEstimate,
       aiCondition,
       isSuspicious,
@@ -134,6 +135,8 @@ const createListing = async (req, res) => {
       pincode: pincode || '',
 
       city: city || '',
+
+      state: state || '',
 
       aiEstimate: {
         low: aiEstimate?.low ?? null,
@@ -212,6 +215,8 @@ const getListings = async (req, res) => {
       maxPrice,
       status,
       seller,
+      pincode,
+      city,
     } = req.query;
 
     const filter = {};
@@ -224,6 +229,17 @@ const getListings = async (req, res) => {
 
     if (seller && isValidObjectId(seller)) {
       filter.seller = seller;
+    }
+
+    if (pincode) {
+      // Match on the first 3 digits (India's postal sorting-district
+      // prefix) for a "near you" style result set.
+      const areaPrefix = String(pincode).slice(0, 3);
+      filter.pincode = new RegExp(`^${areaPrefix}`);
+    }
+
+    if (city) {
+      filter.city = new RegExp(String(city), 'i');
     }
 
     if (
@@ -381,9 +397,6 @@ const getMyListings = async (req, res) => {
     const listings =
       await Listing.find({
         seller: userId,
-        // Deleted listings are soft-deleted (status: 'removed') so
-        // chat/message references to them still resolve, but they
-        // shouldn't reappear in My Listings after a refresh.
         status: { $ne: 'removed' },
       })
         .populate(
@@ -580,6 +593,7 @@ const updateListing = async (req, res) => {
       'sellerPrice',
       'pincode',
       'city',
+      'state',
       'aiEstimate',
       'aiCondition',
       'isSuspicious',
@@ -722,10 +736,6 @@ const markAsSold = async (req, res) => {
 
     await listing.save();
 
-    // A sale just completed - count it toward this seller's trust
-    // score. unmarkAsSold below does the exact opposite (-1) if
-    // this gets reverted, so mark/unmark can't be used to farm an
-    // unlimited score by toggling back and forth.
     await User.findByIdAndUpdate(
       userId,
       { $inc: { successfulSales: 1 } }
@@ -771,11 +781,6 @@ const markAsSold = async (req, res) => {
 // ============================================================
 // UNMARK AS SOLD
 // PATCH /api/listings/:id/unsold
-//
-// Reverts a 'sold' listing back to 'active'. Bypasses
-// updateListing's "sold listings can't be edited" restriction,
-// since that block exists to stop *editing details* of a sold
-// item, not to prevent the seller from reopening the listing.
 // ============================================================
 
 const unmarkAsSold = async (req, res) => {
@@ -832,14 +837,8 @@ const unmarkAsSold = async (req, res) => {
 
     listing.status = 'active';
 
-    // The pre('save') hook on the model already clears
-    // soldAt/soldTo whenever status moves away from 'sold'.
-
     await listing.save();
 
-    // Reverse the +1 from markAsSold. Guarded with successfulSales:
-    // { $gt: 0 } so this can never push the count negative even if
-    // something upstream is ever inconsistent.
     await User.updateOne(
       {
         _id: userId,

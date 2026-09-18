@@ -1,58 +1,12 @@
-// Sends OTP emails through the Gmail API (HTTPS), using OAuth2 credentials
-// tied to a real Gmail account. This deliberately avoids SMTP (smtp.gmail.com)
-// because Render's free tier blocks outbound SMTP ports (25/465/587) -
-// the Gmail API runs over HTTPS (443), which is not blocked.
+// Sends OTP emails through the Brevo API (HTTPS), using an API key.
+// Render's free tier blocks outbound SMTP ports (25/465/587), so we use
+// Brevo's HTTPS API (443) instead - no SMTP, no OAuth token refresh needed.
 //
-// One-time setup required (see backend/.env.example for the full walkthrough):
-//   GMAIL_USER, GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN
+// One-time setup required (see backend/.env.example):
+//   BREVO_API_KEY, BREVO_SENDER_EMAIL (must be a verified sender/domain in Brevo)
 
 function generateOtp() {
   return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
-}
-
-// Exchanges the long-lived refresh token for a short-lived access token.
-// Access tokens expire in ~1hr, so we fetch a fresh one on every send rather
-// than caching - simpler and avoids any expiry-edge-case bugs.
-async function getAccessToken() {
-  const { GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN } = process.env;
-
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: GMAIL_CLIENT_ID,
-      client_secret: GMAIL_CLIENT_SECRET,
-      refresh_token: GMAIL_REFRESH_TOKEN,
-      grant_type: 'refresh_token',
-    }),
-  });
-
-  if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    throw new Error(`Failed to refresh Gmail access token: ${response.status} ${body}`);
-  }
-
-  const data = await response.json();
-  return data.access_token;
-}
-
-// Gmail's API expects a full RFC 2822 email, base64url-encoded.
-function buildRawMessage({ from, to, subject, html }) {
-  const message = [
-    `From: ${from}`,
-    `To: ${to}`,
-    `Subject: =?UTF-8?B?${Buffer.from(subject, 'utf-8').toString('base64')}?=`,
-    'MIME-Version: 1.0',
-    'Content-Type: text/html; charset=UTF-8',
-    '',
-    html,
-  ].join('\r\n');
-
-  return Buffer.from(message)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
 }
 
 async function sendOtpEmail(to, otp, purpose = 'verify') {
@@ -67,38 +21,33 @@ async function sendOtpEmail(to, otp, purpose = 'verify') {
       <p style="color:#6B7280;font-size:13px">This code expires in 10 minutes. If you didn't request this, you can ignore this email.</p>
     </div>`;
 
-  const { GMAIL_USER, GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN } = process.env;
-  if (!GMAIL_USER || !GMAIL_CLIENT_ID || !GMAIL_CLIENT_SECRET || !GMAIL_REFRESH_TOKEN) {
-    // Dev fallback - Gmail API not configured yet, so surface the code in the
+  const { BREVO_API_KEY, BREVO_SENDER_EMAIL } = process.env;
+  if (!BREVO_API_KEY || !BREVO_SENDER_EMAIL) {
+    // Dev fallback - Brevo not configured yet, so surface the code in the
     // server logs instead of failing registration/login outright.
-    console.log(`\n[emailService] Gmail API not configured. OTP for ${to} (${purpose}): ${otp}\n`);
+    console.log(`\n[emailService] Brevo not configured. OTP for ${to} (${purpose}): ${otp}\n`);
     return { delivered: false };
   }
 
-  const accessToken = await getAccessToken();
-  const raw = buildRawMessage({
-    from: `ReTech AI <${GMAIL_USER}>`,
-    to,
-    subject,
-    html,
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': BREVO_API_KEY,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      sender: { name: 'ReTech AI', email: BREVO_SENDER_EMAIL },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
   });
-
-  const response = await fetch(
-    'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ raw }),
-    }
-  );
 
   if (!response.ok) {
     const body = await response.text().catch(() => '');
-    console.error(`[emailService] Gmail API send error ${response.status}:`, body);
-    throw new Error(`Failed to send OTP email (Gmail API ${response.status})`);
+    console.error(`[emailService] Brevo send error ${response.status}:`, body);
+    throw new Error(`Failed to send OTP email (Brevo API ${response.status})`);
   }
 
   return { delivered: true };
